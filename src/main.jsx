@@ -608,6 +608,7 @@ function App() {
     Object.fromEntries(pool.players.map((player) => [player.id, player.champion || "United States"])),
   );
   const [spinningPickId, setSpinningPickId] = useState("");
+  const [pickView, setPickView] = useState("active");
   const [saveStatus, setSaveStatus] = useState(CLOUD_SYNC_ENABLED ? "Connecting to shared pool..." : "Saved locally");
   const cloudReadyRef = useRef(!CLOUD_SYNC_ENABLED);
   const saveTimerRef = useRef(null);
@@ -936,6 +937,10 @@ function App() {
               <h3>{selectedPlayer.name}'s Picks</h3>
             </div>
           </div>
+          <div className="pick-view-tabs" aria-label="Pick views">
+            <button className={pickView === "active" ? "active" : ""} onClick={() => setPickView("active")}>Active Picks</button>
+            <button className={pickView === "past" ? "active" : ""} onClick={() => setPickView("past")}>Past Picks</button>
+          </div>
           <div className="champion-row">
             <label>World Cup winner pick</label>
             {selectedPlayer.championLocked ? (
@@ -952,7 +957,7 @@ function App() {
               </>
             )}
           </div>
-          {selectedPlayer.championLocked ? (
+          {selectedPlayer.championLocked && pickView === "active" ? (
             <div className="pick-table">
               {pool.matches.filter((match) => {
                 const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
@@ -983,6 +988,33 @@ function App() {
                 return pick?.locked || (isFilled(match.homeScore) && isFilled(match.awayScore));
               }) && (
                 <p className="empty-state">All available picks are locked or closed.</p>
+              )}
+            </div>
+          ) : selectedPlayer.championLocked && pickView === "past" ? (
+            <div className="pick-table past-picks">
+              {pool.matches.filter((match) => {
+                const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
+                return pick?.locked;
+              }).map((match) => {
+                const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
+                return (
+                  <article className="pick-row past-pick-row" key={match.id}>
+                    <div>
+                      <span>{match.date} · {match.stage}</span>
+                      <h4>{match.home} vs {match.away}</h4>
+                    </div>
+                    <div className="past-score">
+                      <strong>{pick?.homeScore || "0"}</strong>
+                      <span>-</span>
+                      <strong>{pick?.awayScore || "0"}</strong>
+                    </div>
+                    <strong>{scorePick(match, pick, pool.rules)} pts</strong>
+                    <span className="locked-badge">Locked</span>
+                  </article>
+                );
+              })}
+              {pool.picks.every((pick) => pick.playerId !== selectedPlayer.id || !pick.locked) && (
+                <p className="empty-state">No past picks yet.</p>
               )}
             </div>
           ) : (
