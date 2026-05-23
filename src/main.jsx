@@ -477,6 +477,13 @@ async function loadCloudPool() {
 
 async function saveCloudPool(pool) {
   if (!CLOUD_SYNC_ENABLED) return;
+  const cloudPool = await loadCloudPool();
+  const mergedPool = cloudPool ? mergePoolStates(cloudPool, pool) : normalizePool(pool);
+  await writeCloudPool(mergedPool);
+  return mergedPool;
+}
+
+async function writeCloudPool(pool) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/pool_state?on_conflict=id`, {
     method: "POST",
     headers: supabaseHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
@@ -500,6 +507,66 @@ function markPoolUpdated(pool) {
   };
 }
 
+function itemUpdatedAt(item) {
+  return Number(item?.updatedAt || item?.resultUpdatedAt || 0);
+}
+
+function newestItem(first, second) {
+  if (!first) return second;
+  if (!second) return first;
+  if (itemUpdatedAt(second) > itemUpdatedAt(first)) return second;
+  return first;
+}
+
+function mergeById(firstItems, secondItems) {
+  const merged = new Map();
+  [...firstItems, ...secondItems].forEach((item) => {
+    merged.set(item.id, newestItem(merged.get(item.id), item));
+  });
+  return [...merged.values()];
+}
+
+function mergePicks(firstPicks, secondPicks) {
+  const merged = new Map();
+  [...firstPicks, ...secondPicks].forEach((pick) => {
+    const key = `${pick.playerId}-${pick.matchId}`;
+    const current = merged.get(key);
+    const next = newestItem(current, pick);
+    merged.set(key, {
+      ...next,
+      locked: Boolean(current?.locked || pick.locked || next.locked),
+    });
+  });
+  return [...merged.values()];
+}
+
+function mergeMatches(firstMatches, secondMatches) {
+  const merged = new Map();
+  [...firstMatches, ...secondMatches].forEach((match) => {
+    const current = merged.get(match.id);
+    const next = newestItem(current, match);
+    merged.set(match.id, {
+      ...next,
+      resultLocked: Boolean(current?.resultLocked || match.resultLocked || next.resultLocked),
+    });
+  });
+  return [...merged.values()].sort((a, b) => `${a.date}-${a.id}`.localeCompare(`${b.date}-${b.id}`));
+}
+
+function mergePoolStates(firstPool, secondPool) {
+  const first = normalizePool(firstPool);
+  const second = normalizePool(secondPool);
+  const newerPool = poolUpdatedAt(second) > poolUpdatedAt(first) ? second : first;
+
+  return normalizePool({
+    ...newerPool,
+    players: mergeById(first.players, second.players),
+    matches: mergeMatches(first.matches, second.matches),
+    picks: mergePicks(first.picks, second.picks),
+    updatedAt: Math.max(poolUpdatedAt(first), poolUpdatedAt(second), Date.now()),
+  });
+}
+
 function legacyPoolUpdatedAt(pool) {
   if (pool.updatedAt) return Number(pool.updatedAt);
   const hasExtraPlayers = (pool.players?.length ?? seedPlayers.length) !== seedPlayers.length;
@@ -516,15 +583,18 @@ function normalizePool(pool) {
     ...player,
     champion: player.champion ?? "",
     championLocked: Boolean(player.championLocked),
+    updatedAt: Number(player.updatedAt || pool.updatedAt || 0),
   }));
   const picks = (shouldUpgradeSchedule ? [] : (pool.picks ?? initialState.picks)).map((pick) => ({
     ...pick,
     locked: Boolean(pick.locked),
+    updatedAt: Number(pick.updatedAt || pool.updatedAt || 0),
   }));
   const matches = (shouldUpgradeSchedule ? seedMatches : (pool.matches ?? initialState.matches)).map((match) => ({
     ...match,
     resultUpdatedAt: match.resultUpdatedAt ?? "",
     resultLocked: Boolean(match.resultLocked),
+    updatedAt: Number(match.updatedAt || match.resultUpdatedAt || pool.updatedAt || 0),
   }));
 
   return {
@@ -647,21 +717,16 @@ function App() {
 
         const localPool = normalizePool(getStoredState());
         if (cloudPool) {
-          const newestPool = poolUpdatedAt(localPool) > poolUpdatedAt(cloudPool) ? localPool : cloudPool;
-          const newestJson = JSON.stringify(newestPool);
-          localStorage.setItem(STORAGE_KEY, newestJson);
-          setPool(newestPool);
-          setSelectedPlayerId(newestPool.players[0]?.id ?? "");
-          setChampionDrafts(Object.fromEntries(newestPool.players.map((player) => [player.id, player.champion || "United States"])));
-
-          if (newestPool === localPool) {
-            await saveCloudPool(localPool);
-            if (cancelled) return;
-            setSaveStatus("Shared pool restored");
-          } else {
-            setSaveStatus("Shared pool connected");
-          }
-          lastCloudJsonRef.current = newestJson;
+          const mergedPool = mergePoolStates(cloudPool, localPool);
+          await writeCloudPool(mergedPool);
+          if (cancelled) return;
+          const mergedJson = JSON.stringify(mergedPool);
+          localStorage.setItem(STORAGE_KEY, mergedJson);
+          setPool(mergedPool);
+          setSelectedPlayerId(mergedPool.players[0]?.id ?? "");
+          setChampionDrafts(Object.fromEntries(mergedPool.players.map((player) => [player.id, player.champion || "United States"])));
+          lastCloudJsonRef.current = mergedJson;
+          setSaveStatus("Shared pool connected");
         } else {
           await saveCloudPool(localPool);
           if (cancelled) return;
@@ -692,8 +757,13 @@ function App() {
     window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(async () => {
       try {
-        await saveCloudPool(pool);
-        lastCloudJsonRef.current = poolJson;
+        const mergedPool = await saveCloudPool(pool);
+        const mergedJson = JSON.stringify(mergedPool);
+        lastCloudJsonRef.current = mergedJson;
+        if (mergedJson !== poolJson) {
+          localStorage.setItem(STORAGE_KEY, mergedJson);
+          setPool(mergedPool);
+        }
         setSaveStatus("Shared pool saved");
       } catch {
         setSaveStatus("Shared pool offline, saved locally");
@@ -747,7 +817,7 @@ function App() {
   function addPlayer() {
     const name = draftPlayer.name.trim();
     if (!name) return;
-    const player = { id: uid("p"), name, champion: "", championLocked: false };
+    const player = { id: uid("p"), name, champion: "", championLocked: false, updatedAt: Date.now() };
     updatePool((current) => ({ ...current, players: [...current.players, player] }));
     setSelectedPlayerId(player.id);
     setChampionDrafts((current) => ({ ...current, [player.id]: "United States" }));
@@ -764,7 +834,7 @@ function App() {
   }
 
   function addMatch() {
-    const match = { ...draftMatch, id: uid("m"), homeScore: "", awayScore: "", resultUpdatedAt: "" };
+    const match = { ...draftMatch, id: uid("m"), homeScore: "", awayScore: "", resultUpdatedAt: "", updatedAt: Date.now() };
     updatePool((current) => ({ ...current, matches: [...current.matches, match].sort((a, b) => a.date.localeCompare(b.date)) }));
     setDraftMatch({ date: draftMatch.date, stage: "Group", home: "TBD", away: "TBD" });
   }
@@ -775,7 +845,7 @@ function App() {
       matches: current.matches.map((match) => {
         if (match.id !== matchId) return match;
         if (match.resultLocked && (field === "homeScore" || field === "awayScore")) return match;
-        const next = { ...match, [field]: value };
+        const next = { ...match, [field]: value, updatedAt: Date.now() };
         if (field === "homeScore" || field === "awayScore") {
           next.resultUpdatedAt = isFilled(next.homeScore) && isFilled(next.awayScore) ? Date.now() : "";
         }
@@ -789,7 +859,7 @@ function App() {
       ...current,
       matches: current.matches.map((match) => (
         match.id === matchId && isFilled(match.homeScore) && isFilled(match.awayScore)
-          ? { ...match, resultLocked: true }
+          ? { ...match, resultLocked: true, updatedAt: Date.now() }
           : match
       )),
     }));
@@ -812,8 +882,8 @@ function App() {
       if (existing?.locked) return current;
 
       const picks = existing
-        ? current.picks.map((pick) => (pick.id === existing.id ? { ...pick, [field]: value } : pick))
-        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: field === "homeScore" ? value : "", awayScore: field === "awayScore" ? value : "", locked: false }];
+        ? current.picks.map((pick) => (pick.id === existing.id ? { ...pick, [field]: value, updatedAt: Date.now() } : pick))
+        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: field === "homeScore" ? value : "", awayScore: field === "awayScore" ? value : "", locked: false, updatedAt: Date.now() }];
       return { ...current, picks };
     });
   }
@@ -825,9 +895,9 @@ function App() {
         ? current.picks
         : current.picks.some((pick) => pick.playerId === playerId && pick.matchId === matchId)
         ? current.picks.map((pick) => (
-          pick.playerId === playerId && pick.matchId === matchId ? { ...pick, locked: true } : pick
+          pick.playerId === playerId && pick.matchId === matchId ? { ...pick, locked: true, updatedAt: Date.now() } : pick
         ))
-        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: "", awayScore: "", locked: true }],
+        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: "", awayScore: "", locked: true, updatedAt: Date.now() }],
     }));
   }
 
@@ -846,7 +916,7 @@ function App() {
       ...current,
       players: current.players.map((player) => (
         player.id === playerId && !player.championLocked
-          ? { ...player, champion, championLocked: true }
+          ? { ...player, champion, championLocked: true, updatedAt: Date.now() }
           : player
       )),
     }));
