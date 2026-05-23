@@ -438,6 +438,7 @@ const initialState = {
   picks: seedPicks,
   teams: seedTeams,
   scheduleVersion: SCHEDULE_VERSION,
+  updatedAt: 0,
   rules: {
     exact: 10,
     goalDifference: 7,
@@ -482,10 +483,30 @@ async function saveCloudPool(pool) {
     body: JSON.stringify({
       id: CLOUD_ROW_ID,
       data: pool,
-      updated_at: new Date().toISOString(),
+      updated_at: new Date(Number(pool.updatedAt || Date.now())).toISOString(),
     }),
   });
   if (!response.ok) throw new Error("Could not save shared pool");
+}
+
+function poolUpdatedAt(pool) {
+  return Number(pool?.updatedAt || 0);
+}
+
+function markPoolUpdated(pool) {
+  return {
+    ...pool,
+    updatedAt: Date.now(),
+  };
+}
+
+function legacyPoolUpdatedAt(pool) {
+  if (pool.updatedAt) return Number(pool.updatedAt);
+  const hasExtraPlayers = (pool.players?.length ?? seedPlayers.length) !== seedPlayers.length;
+  const hasDifferentPlayers = (pool.players ?? []).some((player, index) => player.id !== seedPlayers[index]?.id || player.name !== seedPlayers[index]?.name);
+  const hasPicks = (pool.picks?.length ?? 0) > 0;
+  const hasResults = (pool.matches ?? []).some((match) => isFilled(match.homeScore) || isFilled(match.awayScore));
+  return hasExtraPlayers || hasDifferentPlayers || hasPicks || hasResults ? Date.now() : 0;
 }
 
 function normalizePool(pool) {
@@ -513,6 +534,7 @@ function normalizePool(pool) {
     matches,
     picks,
     scheduleVersion: SCHEDULE_VERSION,
+    updatedAt: legacyPoolUpdatedAt(pool),
     rules: {
       ...rules,
       ...initialState.rules,
@@ -623,16 +645,24 @@ function App() {
         const cloudPool = await loadCloudPool();
         if (cancelled) return;
 
+        const localPool = normalizePool(getStoredState());
         if (cloudPool) {
-          const cloudJson = JSON.stringify(cloudPool);
-          lastCloudJsonRef.current = cloudJson;
-          localStorage.setItem(STORAGE_KEY, cloudJson);
-          setPool(cloudPool);
-          setSelectedPlayerId(cloudPool.players[0]?.id ?? "");
-          setChampionDrafts(Object.fromEntries(cloudPool.players.map((player) => [player.id, player.champion || "United States"])));
-          setSaveStatus("Shared pool connected");
+          const newestPool = poolUpdatedAt(localPool) > poolUpdatedAt(cloudPool) ? localPool : cloudPool;
+          const newestJson = JSON.stringify(newestPool);
+          localStorage.setItem(STORAGE_KEY, newestJson);
+          setPool(newestPool);
+          setSelectedPlayerId(newestPool.players[0]?.id ?? "");
+          setChampionDrafts(Object.fromEntries(newestPool.players.map((player) => [player.id, player.champion || "United States"])));
+
+          if (newestPool === localPool) {
+            await saveCloudPool(localPool);
+            if (cancelled) return;
+            setSaveStatus("Shared pool restored");
+          } else {
+            setSaveStatus("Shared pool connected");
+          }
+          lastCloudJsonRef.current = newestJson;
         } else {
-          const localPool = normalizePool(getStoredState());
           await saveCloudPool(localPool);
           if (cancelled) return;
           lastCloudJsonRef.current = JSON.stringify(localPool);
@@ -706,7 +736,8 @@ function App() {
 
   function updatePool(recipe) {
     setPool((current) => {
-      const next = typeof recipe === "function" ? recipe(current) : recipe;
+      const recipeResult = typeof recipe === "function" ? recipe(current) : recipe;
+      const next = recipeResult === current ? current : markPoolUpdated(recipeResult);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       setSaveStatus(CLOUD_SYNC_ENABLED ? "Saving shared pool..." : "Saved locally");
       return next;
@@ -837,7 +868,7 @@ function App() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const next = normalizePool(JSON.parse(String(reader.result)));
+        const next = markPoolUpdated(normalizePool(JSON.parse(String(reader.result))));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
         setPool(next);
         setSelectedPlayerId(next.players?.[0]?.id ?? "");
@@ -851,8 +882,9 @@ function App() {
   }
 
   function resetPool() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(initialState));
-    setPool(initialState);
+    const resetState = markPoolUpdated(initialState);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(resetState));
+    setPool(resetState);
     setSelectedPlayerId(initialState.players[0].id);
     setChampionDrafts(Object.fromEntries(initialState.players.map((player) => [player.id, player.champion || "United States"])));
     setSaveStatus("Reset to demo pool");
