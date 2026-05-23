@@ -2,13 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Check,
-  Download,
   Medal,
   Plus,
   RefreshCcw,
   Sparkles,
   Trash2,
-  Upload,
 } from "lucide-react";
 import "./styles.css";
 
@@ -869,17 +867,6 @@ function App() {
 
   return (
     <main>
-      <section className="topbar">
-        <div className="actions">
-          <span className="status">{saveStatus}</span>
-          <button onClick={exportPool} title="Export pool"><Download size={18} /> Export</button>
-          <label className="file-button" title="Import pool">
-            <Upload size={18} /> Import
-            <input type="file" accept="application/json" onChange={importPool} />
-          </label>
-        </div>
-      </section>
-
       <section className="hero">
         <div className="pitch-art" aria-hidden="true">
           <span></span>
