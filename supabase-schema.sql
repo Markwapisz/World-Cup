@@ -163,3 +163,138 @@ on public.player_picks
 for delete
 to anon
 using (pool_id = 'main');
+
+delete from public.pool_players where pool_id = 'main';
+
+insert into public.pool_players (
+  pool_id,
+  id,
+  name,
+  champion,
+  champion_locked,
+  updated_at
+)
+select
+  'main',
+  player->>'id',
+  player->>'name',
+  nullif(player->>'champion', ''),
+  coalesce((player->>'championLocked')::boolean, false),
+  to_timestamp(nullif(player->>'updatedAt', '')::double precision / 1000)
+from public.pool_state state,
+jsonb_array_elements(coalesce(state.data->'players', '[]'::jsonb)) player
+where state.id = 'main'
+on conflict (pool_id, id) do update set
+  name = excluded.name,
+  champion = excluded.champion,
+  champion_locked = excluded.champion_locked,
+  updated_at = excluded.updated_at;
+
+delete from public.match_results where pool_id = 'main';
+
+insert into public.match_results (
+  pool_id,
+  match_id,
+  match_date,
+  stage,
+  home_team,
+  away_team,
+  home_score,
+  away_score,
+  result_locked,
+  result_updated_at,
+  updated_at
+)
+select
+  'main',
+  match->>'id',
+  nullif(match->>'date', '')::date,
+  match->>'stage',
+  match->>'home',
+  match->>'away',
+  nullif(match->>'homeScore', ''),
+  nullif(match->>'awayScore', ''),
+  coalesce((match->>'resultLocked')::boolean, false),
+  to_timestamp(nullif(match->>'resultUpdatedAt', '')::double precision / 1000),
+  to_timestamp(nullif(match->>'updatedAt', '')::double precision / 1000)
+from public.pool_state state,
+jsonb_array_elements(coalesce(state.data->'matches', '[]'::jsonb)) match
+where state.id = 'main'
+on conflict (pool_id, match_id) do update set
+  match_date = excluded.match_date,
+  stage = excluded.stage,
+  home_team = excluded.home_team,
+  away_team = excluded.away_team,
+  home_score = excluded.home_score,
+  away_score = excluded.away_score,
+  result_locked = excluded.result_locked,
+  result_updated_at = excluded.result_updated_at,
+  updated_at = excluded.updated_at;
+
+delete from public.player_picks where pool_id = 'main';
+
+insert into public.player_picks (
+  pool_id,
+  player_id,
+  player_name,
+  match_id,
+  match_date,
+  stage,
+  home_team,
+  away_team,
+  home_score,
+  away_score,
+  locked,
+  updated_at
+)
+select
+  'main',
+  pick->>'playerId',
+  (
+    select player->>'name'
+    from jsonb_array_elements(coalesce(state.data->'players', '[]'::jsonb)) player
+    where player->>'id' = pick->>'playerId'
+    limit 1
+  ),
+  pick->>'matchId',
+  (
+    select nullif(match->>'date', '')::date
+    from jsonb_array_elements(coalesce(state.data->'matches', '[]'::jsonb)) match
+    where match->>'id' = pick->>'matchId'
+    limit 1
+  ),
+  (
+    select match->>'stage'
+    from jsonb_array_elements(coalesce(state.data->'matches', '[]'::jsonb)) match
+    where match->>'id' = pick->>'matchId'
+    limit 1
+  ),
+  (
+    select match->>'home'
+    from jsonb_array_elements(coalesce(state.data->'matches', '[]'::jsonb)) match
+    where match->>'id' = pick->>'matchId'
+    limit 1
+  ),
+  (
+    select match->>'away'
+    from jsonb_array_elements(coalesce(state.data->'matches', '[]'::jsonb)) match
+    where match->>'id' = pick->>'matchId'
+    limit 1
+  ),
+  nullif(pick->>'homeScore', ''),
+  nullif(pick->>'awayScore', ''),
+  coalesce((pick->>'locked')::boolean, false),
+  to_timestamp(nullif(pick->>'updatedAt', '')::double precision / 1000)
+from public.pool_state state,
+jsonb_array_elements(coalesce(state.data->'picks', '[]'::jsonb)) pick
+where state.id = 'main'
+on conflict (pool_id, player_id, match_id) do update set
+  player_name = excluded.player_name,
+  match_date = excluded.match_date,
+  stage = excluded.stage,
+  home_team = excluded.home_team,
+  away_team = excluded.away_team,
+  home_score = excluded.home_score,
+  away_score = excluded.away_score,
+  locked = excluded.locked,
+  updated_at = excluded.updated_at;
