@@ -12,7 +12,14 @@ This app can run in two modes:
 3. Paste everything from `supabase-schema.sql`.
 4. Run it.
 
-This creates one shared row for the whole family pool. Anyone with the website link can update the pool, so only share it with people you trust.
+This creates one shared row for the whole family pool, plus readable tables for Supabase:
+
+- `pool_state`: the master save data for the app
+- `pool_players`: one row per player
+- `match_results`: one row per World Cup game and score
+- `player_picks`: one row per player pick
+
+Anyone with the website link can update the pool, so only share it with people you trust.
 
 ## 2. Get Supabase Keys
 

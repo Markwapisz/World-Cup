@@ -494,6 +494,89 @@ async function writeCloudPool(pool) {
     }),
   });
   if (!response.ok) throw new Error("Could not save shared pool");
+
+  try {
+    await syncVisibleSupabaseTables(pool);
+  } catch (error) {
+    console.warn("Saved shared pool, but could not update visible Supabase tables.", error);
+  }
+}
+
+function toSupabaseTime(value) {
+  const timestamp = Number(value || 0);
+  return timestamp ? new Date(timestamp).toISOString() : null;
+}
+
+function blankToNull(value) {
+  return isFilled(value) ? String(value) : null;
+}
+
+async function replaceVisibleTable(tableName, rows) {
+  await fetch(`${SUPABASE_URL}/rest/v1/${tableName}?pool_id=eq.${CLOUD_ROW_ID}`, {
+    method: "DELETE",
+    headers: supabaseHeaders({ Prefer: "return=minimal" }),
+  });
+
+  if (!rows.length) return;
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${tableName}`, {
+    method: "POST",
+    headers: supabaseHeaders({ Prefer: "return=minimal" }),
+    body: JSON.stringify(rows),
+  });
+  if (!response.ok) throw new Error(`Could not sync ${tableName}`);
+}
+
+async function syncVisibleSupabaseTables(pool) {
+  if (!CLOUD_SYNC_ENABLED) return;
+  const normalized = normalizePool(pool);
+  const playersById = new Map(normalized.players.map((player) => [player.id, player]));
+  const matchesById = new Map(normalized.matches.map((match) => [match.id, match]));
+
+  const playerRows = normalized.players.map((player) => ({
+    pool_id: CLOUD_ROW_ID,
+    id: player.id,
+    name: player.name,
+    champion: player.champion || null,
+    champion_locked: Boolean(player.championLocked),
+    updated_at: toSupabaseTime(player.updatedAt || normalized.updatedAt),
+  }));
+
+  const resultRows = normalized.matches.map((match) => ({
+    pool_id: CLOUD_ROW_ID,
+    match_id: match.id,
+    match_date: match.date,
+    stage: match.stage,
+    home_team: match.home,
+    away_team: match.away,
+    home_score: blankToNull(match.homeScore),
+    away_score: blankToNull(match.awayScore),
+    result_locked: Boolean(match.resultLocked),
+    result_updated_at: toSupabaseTime(match.resultUpdatedAt),
+    updated_at: toSupabaseTime(match.updatedAt || match.resultUpdatedAt || normalized.updatedAt),
+  }));
+
+  const pickRows = normalized.picks.map((pick) => {
+    const player = playersById.get(pick.playerId);
+    const match = matchesById.get(pick.matchId);
+    return {
+      pool_id: CLOUD_ROW_ID,
+      player_id: pick.playerId,
+      player_name: player?.name || null,
+      match_id: pick.matchId,
+      match_date: match?.date || null,
+      stage: match?.stage || null,
+      home_team: match?.home || null,
+      away_team: match?.away || null,
+      home_score: blankToNull(pick.homeScore),
+      away_score: blankToNull(pick.awayScore),
+      locked: Boolean(pick.locked),
+      updated_at: toSupabaseTime(pick.updatedAt || normalized.updatedAt),
+    };
+  });
+
+  await replaceVisibleTable("pool_players", playerRows);
+  await replaceVisibleTable("match_results", resultRows);
+  await replaceVisibleTable("player_picks", pickRows);
 }
 
 function poolUpdatedAt(pool) {
