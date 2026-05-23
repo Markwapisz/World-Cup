@@ -437,6 +437,7 @@ const initialState = {
   matches: seedMatches,
   picks: seedPicks,
   teams: seedTeams,
+  deletedPlayerIds: [],
   scheduleVersion: SCHEDULE_VERSION,
   updatedAt: 0,
   rules: {
@@ -640,12 +641,14 @@ function mergePoolStates(firstPool, secondPool) {
   const first = normalizePool(firstPool);
   const second = normalizePool(secondPool);
   const newerPool = poolUpdatedAt(second) > poolUpdatedAt(first) ? second : first;
+  const deletedPlayerIds = [...new Set([...(first.deletedPlayerIds ?? []), ...(second.deletedPlayerIds ?? [])])];
 
   return normalizePool({
     ...newerPool,
-    players: mergeById(first.players, second.players),
+    deletedPlayerIds,
+    players: mergeById(first.players, second.players).filter((player) => !deletedPlayerIds.includes(player.id)),
     matches: mergeMatches(first.matches, second.matches),
-    picks: mergePicks(first.picks, second.picks),
+    picks: mergePicks(first.picks, second.picks).filter((pick) => !deletedPlayerIds.includes(pick.playerId)),
     updatedAt: Math.max(poolUpdatedAt(first), poolUpdatedAt(second), Date.now()),
   });
 }
@@ -662,17 +665,18 @@ function legacyPoolUpdatedAt(pool) {
 function normalizePool(pool) {
   const rules = pool.rules ?? initialState.rules;
   const shouldUpgradeSchedule = pool.scheduleVersion !== SCHEDULE_VERSION || (pool.matches?.length ?? 0) < seedMatches.length;
+  const deletedPlayerIds = [...new Set(pool.deletedPlayerIds ?? [])];
   const players = (pool.players ?? initialState.players).map((player) => ({
     ...player,
     champion: player.champion ?? "",
     championLocked: Boolean(player.championLocked),
     updatedAt: Number(player.updatedAt || pool.updatedAt || 0),
-  }));
+  })).filter((player) => !deletedPlayerIds.includes(player.id));
   const picks = (shouldUpgradeSchedule ? [] : (pool.picks ?? initialState.picks)).map((pick) => ({
     ...pick,
     locked: Boolean(pick.locked),
     updatedAt: Number(pick.updatedAt || pool.updatedAt || 0),
-  }));
+  })).filter((pick) => !deletedPlayerIds.includes(pick.playerId));
   const matches = (shouldUpgradeSchedule ? seedMatches : (pool.matches ?? initialState.matches)).map((match) => ({
     ...match,
     resultUpdatedAt: match.resultUpdatedAt ?? "",
@@ -683,6 +687,7 @@ function normalizePool(pool) {
   return {
     ...initialState,
     ...pool,
+    deletedPlayerIds,
     players,
     matches,
     picks,
@@ -910,9 +915,15 @@ function App() {
   function removePlayer(playerId) {
     updatePool((current) => ({
       ...current,
+      deletedPlayerIds: [...new Set([...(current.deletedPlayerIds ?? []), playerId])],
       players: current.players.filter((player) => player.id !== playerId),
       picks: current.picks.filter((pick) => pick.playerId !== playerId),
     }));
+    setChampionDrafts((current) => {
+      const next = { ...current };
+      delete next[playerId];
+      return next;
+    });
     if (selectedPlayerId === playerId) setSelectedPlayerId(pool.players.find((player) => player.id !== playerId)?.id ?? "");
   }
 
