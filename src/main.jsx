@@ -1055,8 +1055,8 @@ function App() {
   }
 
   const tabs = [
-    ["dashboard", HandDrawnWorldCupIcon, "Standings"],
-    ["picks", RealisticClipboardIcon, "Picks"],
+    ["dashboard", HandDrawnWorldCupIcon, "Home"],
+    ["picks", RealisticClipboardIcon, "Betting"],
     ["matches", RealisticCalendarIcon, "Calendar"],
     ["family", RealisticPlayerIcon, "Add Player"],
     ["settings", RealisticRulesIcon, "Rules"],
