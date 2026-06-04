@@ -254,23 +254,6 @@ main > :not(.hero) {
   z-index: 0;
 }
 
-.pitch-art {
-  bottom: 1.2rem;
-  display: flex;
-  gap: 0.55rem;
-  position: absolute;
-  right: 1.5rem;
-}
-
-.pitch-art span {
-  background: #fff;
-  border-radius: 999px;
-  display: block;
-  height: 0.65rem;
-  opacity: 0.7;
-  width: 0.65rem;
-}
-
 .hero-copy {
   left: clamp(0.75rem, 2vw, 1.2rem);
   max-width: none;

@@ -1075,11 +1075,6 @@ function App() {
   return (
     <main>
       <section className="hero">
-        <div className="pitch-art" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
         <div className="hero-copy">
           <p className="eyebrow"><Sparkles size={16} /> 2026 World Cup</p>
         </div>
