@@ -629,9 +629,10 @@ function mergeMatches(firstMatches, secondMatches) {
   [...firstMatches, ...secondMatches].forEach((match) => {
     const current = merged.get(match.id);
     const next = newestItem(current, match);
+    const hasScore = isFilled(next.homeScore) && isFilled(next.awayScore);
     merged.set(match.id, {
       ...next,
-      resultLocked: Boolean(current?.resultLocked || match.resultLocked || next.resultLocked),
+      resultLocked: hasScore && Boolean(current?.resultLocked || match.resultLocked || next.resultLocked),
     });
   });
   return [...merged.values()].sort((a, b) => `${a.date}-${a.id}`.localeCompare(`${b.date}-${b.id}`));
@@ -680,7 +681,7 @@ function normalizePool(pool) {
   const matches = (shouldUpgradeSchedule ? seedMatches : (pool.matches ?? initialState.matches)).map((match) => ({
     ...match,
     resultUpdatedAt: match.resultUpdatedAt ?? "",
-    resultLocked: Boolean(match.resultLocked),
+    resultLocked: Boolean(match.resultLocked) && isFilled(match.homeScore) && isFilled(match.awayScore),
     updatedAt: Number(match.updatedAt || match.resultUpdatedAt || pool.updatedAt || 0),
   }));
 
@@ -1045,13 +1046,22 @@ function App() {
     reader.readAsText(file);
   }
 
-  function resetPool() {
+  async function resetPool() {
     const resetState = markPoolUpdated(initialState);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(resetState));
     setPool(resetState);
     setSelectedPlayerId(initialState.players[0].id);
     setChampionDrafts(Object.fromEntries(initialState.players.map((player) => [player.id, player.champion || "United States"])));
-    setSaveStatus("Reset to demo pool");
+    setSaveStatus(CLOUD_SYNC_ENABLED ? "Resetting shared pool..." : "Reset to demo pool");
+
+    if (!CLOUD_SYNC_ENABLED) return;
+    try {
+      await writeCloudPool(resetState);
+      lastCloudJsonRef.current = JSON.stringify(resetState);
+      setSaveStatus("Shared pool reset");
+    } catch {
+      setSaveStatus("Reset locally, shared pool offline");
+    }
   }
 
   const tabs = [
