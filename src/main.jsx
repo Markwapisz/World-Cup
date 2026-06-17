@@ -509,6 +509,7 @@ function toSupabaseTime(value) {
 }
 
 function blankToNull(value) {
+  if (value === 0 || value === "0") return "0";
   return isFilled(value) ? String(value) : null;
 }
 
@@ -673,17 +674,29 @@ function normalizePool(pool) {
     championLocked: Boolean(player.championLocked),
     updatedAt: Number(player.updatedAt || pool.updatedAt || 0),
   })).filter((player) => !deletedPlayerIds.includes(player.id));
-  const picks = (shouldUpgradeSchedule ? [] : (pool.picks ?? initialState.picks)).map((pick) => ({
-    ...pick,
-    locked: Boolean(pick.locked),
-    updatedAt: Number(pick.updatedAt || pool.updatedAt || 0),
-  })).filter((pick) => !deletedPlayerIds.includes(pick.playerId));
-  const matches = (shouldUpgradeSchedule ? seedMatches : (pool.matches ?? initialState.matches)).map((match) => ({
-    ...match,
-    resultUpdatedAt: match.resultUpdatedAt ?? "",
-    resultLocked: Boolean(match.resultLocked) && isFilled(match.homeScore) && isFilled(match.awayScore),
-    updatedAt: Number(match.updatedAt || match.resultUpdatedAt || pool.updatedAt || 0),
-  }));
+  const picks = (shouldUpgradeSchedule ? [] : (pool.picks ?? initialState.picks)).map((pick) => {
+    const hasEitherScore = isFilled(pick.homeScore) || isFilled(pick.awayScore);
+    return {
+      ...pick,
+      homeScore: normalizeScoreValue(pick.homeScore, hasEitherScore),
+      awayScore: normalizeScoreValue(pick.awayScore, hasEitherScore),
+      locked: Boolean(pick.locked),
+      updatedAt: Number(pick.updatedAt || pool.updatedAt || 0),
+    };
+  }).filter((pick) => !deletedPlayerIds.includes(pick.playerId));
+  const matches = (shouldUpgradeSchedule ? seedMatches : (pool.matches ?? initialState.matches)).map((match) => {
+    const hasEitherScore = isFilled(match.homeScore) || isFilled(match.awayScore);
+    const homeScore = normalizeScoreValue(match.homeScore, hasEitherScore);
+    const awayScore = normalizeScoreValue(match.awayScore, hasEitherScore);
+    return {
+      ...match,
+      homeScore,
+      awayScore,
+      resultUpdatedAt: match.resultUpdatedAt ?? "",
+      resultLocked: Boolean(match.resultLocked) && isFilled(homeScore) && isFilled(awayScore),
+      updatedAt: Number(match.updatedAt || match.resultUpdatedAt || pool.updatedAt || 0),
+    };
+  });
 
   return {
     ...initialState,
@@ -716,6 +729,14 @@ function matchOutcome(home, away) {
 
 function isFilled(value) {
   return value !== "" && value !== null && value !== undefined;
+}
+
+function normalizeScoreValue(value, shouldTreatBlankAsZero = false) {
+  if (value === 0 || value === "0") return "0";
+  if (value === null || value === undefined || value === "") {
+    return shouldTreatBlankAsZero ? "0" : "";
+  }
+  return String(value);
 }
 
 function scorePick(match, pick, rules) {
