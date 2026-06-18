@@ -733,9 +733,10 @@ function isFilled(value) {
 
 function normalizeScoreValue(value, shouldTreatBlankAsZero = false) {
   if (value === 0 || value === "0") return "0";
-  if (value === null || value === undefined || value === "") {
+  if (value === null || value === undefined) {
     return shouldTreatBlankAsZero ? "0" : "";
   }
+  if (value === "") return "";
   return String(value);
 }
 
