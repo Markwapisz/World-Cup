@@ -473,7 +473,14 @@ async function loadCloudPool() {
   });
   if (!response.ok) throw new Error("Could not load shared pool");
   const rows = await response.json();
-  return rows[0]?.data ? normalizePool(rows[0].data) : null;
+  if (!rows[0]?.data) return null;
+
+  const pool = normalizePool(rows[0].data);
+  try {
+    return await loadPoolWithVisibleTableEdits(pool);
+  } catch {
+    return pool;
+  }
 }
 
 async function saveCloudPool(pool) {
@@ -526,6 +533,93 @@ async function replaceVisibleTable(tableName, rows) {
     body: JSON.stringify(rows),
   });
   if (!response.ok) throw new Error(`Could not sync ${tableName}`);
+}
+
+async function loadVisibleTable(tableName, selectColumns) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${tableName}?pool_id=eq.${CLOUD_ROW_ID}&select=${selectColumns}`, {
+    headers: supabaseHeaders(),
+  });
+  if (!response.ok) return [];
+  return response.json();
+}
+
+function visibleScoreValue(value) {
+  if (value === 0 || value === "0") return "0";
+  return isFilled(value) ? String(value) : "";
+}
+
+function visibleRowTimestamp(row) {
+  const parsed = Date.parse(row.updated_at || row.result_updated_at || "");
+  return Number.isFinite(parsed) ? parsed : Date.now();
+}
+
+function applyVisibleTableEdits(pool, resultRows, pickRows) {
+  const normalized = normalizePool(pool);
+  const resultRowsById = new Map(resultRows.map((row) => [row.match_id, row]));
+  const playersById = new Map(normalized.players.map((player) => [player.id, player]));
+  const playersByName = new Map(normalized.players.map((player) => [player.name.toLowerCase(), player]));
+
+  const matches = normalized.matches.map((match) => {
+    const row = resultRowsById.get(match.id);
+    const homeScore = visibleScoreValue(row?.home_score);
+    const awayScore = visibleScoreValue(row?.away_score);
+    if (!row || !isFilled(homeScore) || !isFilled(awayScore)) return match;
+    if (match.homeScore === homeScore && match.awayScore === awayScore && Boolean(match.resultLocked) === Boolean(row.result_locked)) {
+      return match;
+    }
+
+    return {
+      ...match,
+      homeScore,
+      awayScore,
+      resultLocked: Boolean(row.result_locked || match.resultLocked),
+      resultUpdatedAt: visibleRowTimestamp(row),
+      updatedAt: visibleRowTimestamp(row),
+    };
+  });
+
+  const picksByKey = new Map(normalized.picks.map((pick) => [`${pick.playerId}-${pick.matchId}`, pick]));
+  pickRows.forEach((row) => {
+    const player = playersById.get(row.player_id) || playersByName.get(String(row.player_name || "").toLowerCase());
+    const match = normalized.matches.find((item) => item.id === row.match_id);
+    const homeScore = visibleScoreValue(row.home_score);
+    const awayScore = visibleScoreValue(row.away_score);
+    if (!player || !match || !isFilled(homeScore) || !isFilled(awayScore)) return;
+
+    const key = `${player.id}-${match.id}`;
+    const existingPick = picksByKey.get(key);
+    if (
+      existingPick
+      && existingPick.homeScore === homeScore
+      && existingPick.awayScore === awayScore
+      && Boolean(existingPick.locked) === Boolean(row.locked)
+    ) {
+      return;
+    }
+
+    picksByKey.set(key, {
+      ...(existingPick || { id: uid("pick"), playerId: player.id, matchId: match.id }),
+      homeScore,
+      awayScore,
+      locked: Boolean(row.locked || existingPick?.locked),
+      updatedAt: visibleRowTimestamp(row),
+    });
+  });
+
+  return normalizePool({
+    ...normalized,
+    matches,
+    picks: [...picksByKey.values()],
+    updatedAt: Date.now(),
+  });
+}
+
+async function loadPoolWithVisibleTableEdits(pool) {
+  const [resultRows, pickRows] = await Promise.all([
+    loadVisibleTable("match_results", "match_id,home_score,away_score,result_locked,result_updated_at,updated_at"),
+    loadVisibleTable("player_picks", "player_id,player_name,match_id,home_score,away_score,locked,updated_at"),
+  ]);
+  return applyVisibleTableEdits(pool, resultRows, pickRows);
 }
 
 async function syncVisibleSupabaseTables(pool) {
