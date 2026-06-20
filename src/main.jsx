@@ -553,16 +553,50 @@ function visibleRowTimestamp(row) {
   return Math.max(Date.parse(row.updated_at || row.result_updated_at || "") || 0, Date.now());
 }
 
+function normalizedTeamName(team) {
+  return String(team || "").trim().toLowerCase();
+}
+
+function findVisibleMatch(row, matches) {
+  const homeTeam = normalizedTeamName(row.home_team);
+  const awayTeam = normalizedTeamName(row.away_team);
+  const rowDate = row.match_date || "";
+
+  const teamMatch = matches.find((match) => {
+    const homeMatches = normalizedTeamName(match.home) === homeTeam;
+    const awayMatches = normalizedTeamName(match.away) === awayTeam;
+    const reversedHomeMatches = normalizedTeamName(match.home) === awayTeam;
+    const reversedAwayMatches = normalizedTeamName(match.away) === homeTeam;
+    const dateMatches = !rowDate || rowDate === match.date;
+    return dateMatches && ((homeMatches && awayMatches) || (reversedHomeMatches && reversedAwayMatches));
+  });
+  if (teamMatch) return teamMatch;
+  return matches.find((match) => match.id === row.match_id);
+}
+
+function visibleScoresForMatch(row, match) {
+  const homeScore = visibleScoreValue(row.home_score);
+  const awayScore = visibleScoreValue(row.away_score);
+  const rowIsReversed = normalizedTeamName(row.home_team) === normalizedTeamName(match.away)
+    && normalizedTeamName(row.away_team) === normalizedTeamName(match.home);
+  return rowIsReversed
+    ? { homeScore: awayScore, awayScore: homeScore }
+    : { homeScore, awayScore };
+}
+
 function applyVisibleTableEdits(pool, resultRows, pickRows) {
   const normalized = normalizePool(pool);
-  const resultRowsById = new Map(resultRows.map((row) => [row.match_id, row]));
   const playersById = new Map(normalized.players.map((player) => [player.id, player]));
   const playersByName = new Map(normalized.players.map((player) => [player.name.toLowerCase(), player]));
+  const resultRowsByMatchId = new Map();
+  resultRows.forEach((row) => {
+    const match = findVisibleMatch(row, normalized.matches);
+    if (match) resultRowsByMatchId.set(match.id, row);
+  });
 
   const matches = normalized.matches.map((match) => {
-    const row = resultRowsById.get(match.id);
-    const homeScore = visibleScoreValue(row?.home_score);
-    const awayScore = visibleScoreValue(row?.away_score);
+    const row = resultRowsByMatchId.get(match.id);
+    const { homeScore, awayScore } = row ? visibleScoresForMatch(row, match) : { homeScore: "", awayScore: "" };
     if (!row || !isFilled(homeScore) || !isFilled(awayScore)) return match;
     if (match.homeScore === homeScore && match.awayScore === awayScore && Boolean(match.resultLocked) === Boolean(row.result_locked)) {
       return match;
@@ -581,9 +615,8 @@ function applyVisibleTableEdits(pool, resultRows, pickRows) {
   const picksByKey = new Map(normalized.picks.map((pick) => [`${pick.playerId}-${pick.matchId}`, pick]));
   pickRows.forEach((row) => {
     const player = playersById.get(row.player_id) || playersByName.get(String(row.player_name || "").toLowerCase());
-    const match = normalized.matches.find((item) => item.id === row.match_id);
-    const homeScore = visibleScoreValue(row.home_score);
-    const awayScore = visibleScoreValue(row.away_score);
+    const match = findVisibleMatch(row, normalized.matches);
+    const { homeScore, awayScore } = match ? visibleScoresForMatch(row, match) : { homeScore: "", awayScore: "" };
     if (!player || !match || !isFilled(homeScore) || !isFilled(awayScore)) return;
 
     const key = `${player.id}-${match.id}`;
@@ -616,8 +649,8 @@ function applyVisibleTableEdits(pool, resultRows, pickRows) {
 
 async function loadPoolWithVisibleTableEdits(pool) {
   const [resultRows, pickRows] = await Promise.all([
-    loadVisibleTable("match_results", "match_id,home_score,away_score,result_locked,result_updated_at,updated_at"),
-    loadVisibleTable("player_picks", "player_id,player_name,match_id,home_score,away_score,locked,updated_at"),
+    loadVisibleTable("match_results", "match_id,match_date,home_team,away_team,home_score,away_score,result_locked,result_updated_at,updated_at"),
+    loadVisibleTable("player_picks", "player_id,player_name,match_id,match_date,home_team,away_team,home_score,away_score,locked,updated_at"),
   ]);
   return applyVisibleTableEdits(pool, resultRows, pickRows);
 }
