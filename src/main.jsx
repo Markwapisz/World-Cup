@@ -487,8 +487,9 @@ async function saveCloudPool(pool) {
   if (!CLOUD_SYNC_ENABLED) return;
   const cloudPool = await loadCloudPool();
   const mergedPool = cloudPool ? mergePoolStates(cloudPool, pool) : normalizePool(pool);
-  await writeCloudPool(mergedPool);
-  return mergedPool;
+  const correctedPool = await loadPoolWithVisibleTableEdits(mergedPool);
+  await writeCloudPool(correctedPool);
+  return correctedPool;
 }
 
 async function writeCloudPool(pool) {
@@ -549,8 +550,7 @@ function visibleScoreValue(value) {
 }
 
 function visibleRowTimestamp(row) {
-  const parsed = Date.parse(row.updated_at || row.result_updated_at || "");
-  return Number.isFinite(parsed) ? parsed : Date.now();
+  return Math.max(Date.parse(row.updated_at || row.result_updated_at || "") || 0, Date.now());
 }
 
 function applyVisibleTableEdits(pool, resultRows, pickRows) {
@@ -922,7 +922,7 @@ function App() {
 
         const localPool = normalizePool(getStoredState());
         if (cloudPool) {
-          const mergedPool = mergePoolStates(cloudPool, localPool);
+          const mergedPool = await loadPoolWithVisibleTableEdits(mergePoolStates(cloudPool, localPool));
           await writeCloudPool(mergedPool);
           if (cancelled) return;
           const mergedJson = JSON.stringify(mergedPool);
