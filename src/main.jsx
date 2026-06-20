@@ -942,6 +942,7 @@ function App() {
   const [saveStatus, setSaveStatus] = useState(CLOUD_SYNC_ENABLED ? "Connecting to shared pool..." : "Saved locally");
   const cloudReadyRef = useRef(!CLOUD_SYNC_ENABLED);
   const saveTimerRef = useRef(null);
+  const saveVersionRef = useRef(0);
   const lastCloudJsonRef = useRef("");
 
   useEffect(() => {
@@ -988,14 +989,17 @@ function App() {
   useEffect(() => {
     if (!CLOUD_SYNC_ENABLED || !cloudReadyRef.current) return undefined;
     const poolJson = JSON.stringify(pool);
+    const saveVersion = saveVersionRef.current;
     localStorage.setItem(STORAGE_KEY, poolJson);
     if (poolJson === lastCloudJsonRef.current) return undefined;
 
     setSaveStatus("Saving shared pool...");
     window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(async () => {
+      if (saveVersion !== saveVersionRef.current) return;
       try {
         const mergedPool = await saveCloudPool(pool);
+        if (saveVersion !== saveVersionRef.current) return;
         const mergedJson = JSON.stringify(mergedPool);
         lastCloudJsonRef.current = mergedJson;
         if (mergedJson !== poolJson) {
@@ -1004,7 +1008,7 @@ function App() {
         }
         setSaveStatus("Shared pool saved");
       } catch {
-        setSaveStatus("Shared pool offline, saved locally");
+        if (saveVersion === saveVersionRef.current) setSaveStatus("Shared pool offline, saved locally");
       }
     }, 450);
 
@@ -1046,6 +1050,7 @@ function App() {
     setPool((current) => {
       const recipeResult = typeof recipe === "function" ? recipe(current) : recipe;
       const next = recipeResult === current ? current : markPoolUpdated(recipeResult);
+      if (next !== current) saveVersionRef.current += 1;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       setSaveStatus(CLOUD_SYNC_ENABLED ? "Saving shared pool..." : "Saved locally");
       return next;
