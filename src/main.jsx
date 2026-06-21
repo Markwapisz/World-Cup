@@ -1570,7 +1570,8 @@ function CalendarMonth({ month, matches }) {
             <div className="calendar-day blank" key={cell.key}></div>
           ) : (
             <article
-              className={`calendar-day ${cell.matches.length ? "has-match" : ""} ${cell.matches.length && cell.matches.every((match) => isFilled(match.homeScore) && isFilled(match.awayScore)) ? "day-complete" : ""}`}
+              className={`calendar-day ${cell.matches.length ? "has-match" : ""} ${cell.matches.length && cell.matches.every((match) => isFilled(match.homeScore) && isFilled(match.awayScore)) ? "day-complete" : ""} ${month.year === 2026 && month.month === 5 && cell.day === 26 ? "group-deadline" : ""}`}
+              data-deadline="All Group stage bets due!!!"
               key={cell.key}
             >
               <strong>{cell.day}</strong>

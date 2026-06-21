@@ -1371,6 +1371,7 @@ main > :not(.hero) {
   border-radius: 14px;
   min-height: 5.4rem;
   padding: 0.45rem;
+  position: relative;
 }
 
 .calendar-day.blank {
@@ -1431,6 +1432,37 @@ main > :not(.hero) {
 
 .calendar-day.day-complete {
   border-color: rgba(111, 77, 22, 0.42);
+}
+
+.calendar-day.group-deadline::after {
+  background: #b51e1e;
+  bottom: -0.2rem;
+  content: "";
+  position: absolute;
+  right: -0.25rem;
+  top: -0.2rem;
+  width: 4px;
+  z-index: 3;
+}
+
+.calendar-day.group-deadline::before {
+  background: rgba(255, 253, 247, 0.94);
+  border: 2px solid #b51e1e;
+  border-radius: 999px;
+  color: #b51e1e;
+  content: attr(data-deadline);
+  font-size: 0.72rem;
+  font-weight: 900;
+  left: calc(100% + 0.22rem);
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  transform-origin: center;
+  white-space: nowrap;
+  z-index: 4;
 }
 
 .icon {
