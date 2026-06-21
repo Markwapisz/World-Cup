@@ -4,7 +4,6 @@ import {
   Check,
   Medal,
   Plus,
-  RefreshCcw,
   Sparkles,
   Trash2,
 } from "lucide-react";
@@ -480,6 +479,17 @@ const initialState = {
   },
 };
 
+function poolHasFamilyData(pool) {
+  const players = pool.players ?? [];
+  const hasCustomPlayers = players.length !== seedPlayers.length || players.some((player, index) => (
+    player.id !== seedPlayers[index]?.id || player.name !== seedPlayers[index]?.name
+  ));
+  const hasPicks = (pool.picks ?? []).length > 0;
+  const hasResults = (pool.matches ?? []).some((match) => isFilled(match.homeScore) || isFilled(match.awayScore));
+  const hasDeletedPlayers = (pool.deletedPlayerIds ?? []).length > 0;
+  return hasCustomPlayers || hasPicks || hasResults || hasDeletedPlayers;
+}
+
 function getStoredState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -525,19 +535,24 @@ async function saveCloudPool(pool) {
 }
 
 async function writeCloudPool(pool) {
+  const normalizedPool = normalizePool(pool);
+  if (!poolHasFamilyData(normalizedPool)) {
+    throw new Error("Refusing to overwrite shared pool with demo data");
+  }
+
   const response = await fetch(`${SUPABASE_URL}/rest/v1/pool_state?on_conflict=id`, {
     method: "POST",
     headers: supabaseHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
     body: JSON.stringify({
       id: CLOUD_ROW_ID,
-      data: pool,
-      updated_at: new Date(Number(pool.updatedAt || Date.now())).toISOString(),
+      data: normalizedPool,
+      updated_at: new Date(Number(normalizedPool.updatedAt || Date.now())).toISOString(),
     }),
   });
   if (!response.ok) throw new Error("Could not save shared pool");
 
   try {
-    await syncVisibleSupabaseTables(pool);
+    await syncVisibleSupabaseTables(normalizedPool);
   } catch (error) {
     console.warn("Saved shared pool, but could not update visible Supabase tables.", error);
   }
@@ -1252,24 +1267,6 @@ function App() {
     reader.readAsText(file);
   }
 
-  async function resetPool() {
-    const resetState = markPoolUpdated(initialState);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(resetState));
-    setPool(resetState);
-    setSelectedPlayerId(initialState.players[0].id);
-    setChampionDrafts(Object.fromEntries(initialState.players.map((player) => [player.id, player.champion || "United States"])));
-    setSaveStatus(CLOUD_SYNC_ENABLED ? "Resetting shared pool..." : "Reset to demo pool");
-
-    if (!CLOUD_SYNC_ENABLED) return;
-    try {
-      await writeCloudPool(resetState);
-      lastCloudJsonRef.current = JSON.stringify(resetState);
-      setSaveStatus("Shared pool reset");
-    } catch {
-      setSaveStatus("Reset locally, shared pool offline");
-    }
-  }
-
   const tabs = [
     ["dashboard", HandDrawnWorldCupIcon, "Home"],
     ["picks", RealisticClipboardIcon, "Betting"],
@@ -1529,10 +1526,6 @@ function App() {
                 </article>
               ))}
             </div>
-          </div>
-
-          <div className="panel danger">
-            <button onClick={resetPool}><RefreshCcw size={18} /> Reset demo data</button>
           </div>
         </section>
       )}
