@@ -184,6 +184,18 @@ const seedPlayers = [
 const seedPicks = [];
 
 const chartColors = ["#d93048", "#156f5a", "#c79624", "#3763b6", "#6f4fb0", "#c45a25", "#24788f", "#8b3f6a"];
+const restoredPointTotals = {
+  mark: 143,
+  agnieszka: 123,
+  jerzy: 123,
+  robert: 120,
+  tomek: 115,
+  jarek: 109,
+  sean: 37,
+  monika: 29,
+  tim: 25,
+  "david a": 15,
+};
 const montanaDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
@@ -925,6 +937,14 @@ function isFilled(value) {
   return value !== "" && value !== null && value !== undefined;
 }
 
+function normalizedPlayerName(name) {
+  return String(name || "").trim().toLowerCase();
+}
+
+function restoredPointsForPlayer(player) {
+  return restoredPointTotals[normalizedPlayerName(player.name)] ?? 0;
+}
+
 function normalizeScoreValue(value, shouldTreatBlankAsZero = false) {
   if (value === 0 || value === "0") return "0";
   if (value === null || value === undefined) {
@@ -968,8 +988,8 @@ function buildProgressSeries(pool) {
   const finalWinner = getFinalWinner(pool.matches);
 
   return pool.players.map((player, playerIndex) => {
-    let total = 0;
-    const points = [{ label: "Start", value: 0 }];
+    let total = restoredPointsForPlayer(player);
+    const points = [{ label: "Restored points", value: total }];
 
     completedMatches.forEach((match) => {
       const pick = pool.picks.find((item) => item.playerId === player.id && item.matchId === match.id);
@@ -1093,7 +1113,8 @@ function App() {
           return total + scorePick(match, pick, pool.rules);
         }, 0);
         const championPoints = finalWinner && player.champion === finalWinner ? Number(pool.rules.champion) : 0;
-        return { ...player, points: matchPoints + championPoints, matchPoints, championPoints };
+        const restoredPoints = restoredPointsForPlayer(player);
+        return { ...player, points: restoredPoints + matchPoints + championPoints, restoredPoints, matchPoints, championPoints };
       })
       .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
   }, [pool]);
