@@ -1441,7 +1441,7 @@ function App() {
           <div className="calendar-legend">
             <span><i></i> Match day</span>
             <span>Scores appear after results are entered</span>
-            <span>Montana time</span>
+            <span><strong>Montana time</strong></span>
           </div>
           <div className="calendar-grid">
             {worldCupCalendarMonths.map((month) => (
@@ -1576,7 +1576,6 @@ function CalendarMonth({ month, matches }) {
                 return (
                   <span className={hasScore ? "calendar-game completed" : "calendar-game"} key={match.id}>
                     <b>{match.home} vs {match.away}</b>
-                    {match.timeMt && <em>{match.timeMt} MT</em>}
                     {hasScore && <em>{match.homeScore} - {match.awayScore}</em>}
                   </span>
                 );
