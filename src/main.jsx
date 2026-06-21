@@ -13,6 +13,7 @@ import "./styles.css";
 const STORAGE_KEY = "family-world-cup-pool-v1";
 const SCHEDULE_VERSION = "fifa-2026-official-104";
 const CLOUD_ROW_ID = "main";
+const MONTANA_TIME_ZONE = "America/Denver";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const CLOUD_SYNC_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
@@ -184,6 +185,32 @@ const seedPlayers = [
 const seedPicks = [];
 
 const chartColors = ["#d93048", "#156f5a", "#c79624", "#3763b6", "#6f4fb0", "#c45a25", "#24788f", "#8b3f6a"];
+const montanaDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: MONTANA_TIME_ZONE,
+});
+
+function montanaNoonDate(dateKey) {
+  return new Date(`${dateKey}T18:00:00Z`);
+}
+
+function formatMontanaDate(dateKey) {
+  if (!dateKey) return "";
+  return `${montanaDateFormatter.format(montanaNoonDate(dateKey))} MT`;
+}
+
+function montanaDateKey(dateKey) {
+  if (!dateKey) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: MONTANA_TIME_ZONE,
+  }).formatToParts(montanaNoonDate(dateKey));
+  const valueByType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${valueByType.year}-${valueByType.month}-${valueByType.day}`;
+}
 
 function HandDrawnWorldCupIcon({ size = 18 }) {
   return (
@@ -567,7 +594,7 @@ function findVisibleMatch(row, matches) {
     const awayMatches = normalizedTeamName(match.away) === awayTeam;
     const reversedHomeMatches = normalizedTeamName(match.home) === awayTeam;
     const reversedAwayMatches = normalizedTeamName(match.away) === homeTeam;
-    const dateMatches = !rowDate || rowDate === match.date;
+    const dateMatches = !rowDate || montanaDateKey(rowDate) === montanaDateKey(match.date);
     return dateMatches && ((homeMatches && awayMatches) || (reversedHomeMatches && reversedAwayMatches));
   });
   if (teamMatch) return teamMatch;
@@ -1324,7 +1351,7 @@ function App() {
                 return (
                   <article className={`pick-row ${isSpinning ? "spin-away" : ""}`} key={match.id}>
                     <div>
-                      <span>{match.date} · {match.stage}</span>
+                      <span>{formatMontanaDate(match.date)} · {match.stage}</span>
                       <h4>{match.home} vs {match.away}</h4>
                     </div>
                     <ScoreInputs
@@ -1355,7 +1382,7 @@ function App() {
                 return (
                   <article className="pick-row past-pick-row" key={match.id}>
                     <div>
-                      <span>{match.date} · {match.stage}</span>
+                      <span>{formatMontanaDate(match.date)} · {match.stage}</span>
                       <h4>{match.home} vs {match.away}</h4>
                     </div>
                     <div className="past-score">
@@ -1383,13 +1410,13 @@ function App() {
           <div className="section-title">
             <div>
               <h3>World Cup Calendar</h3>
-              <p>Official 2026 FIFA World Cup match dates from June 11 through July 19.</p>
+              <p>All match dates are shown in Montana time.</p>
             </div>
           </div>
           <div className="calendar-legend">
             <span><i></i> Match day</span>
             <span>Scores appear after results are entered</span>
-            <span>Rest days are unfilled</span>
+            <span>Montana time</span>
           </div>
           <div className="calendar-grid">
             {worldCupCalendarMonths.map((month) => (
@@ -1453,7 +1480,7 @@ function App() {
               {pool.matches.map((match) => (
                 <article className="result-row" key={match.id}>
                   <div>
-                    <span>{match.date} · {match.stage}</span>
+                    <span>{formatMontanaDate(match.date)} · {match.stage}</span>
                     <h4>{match.home} vs {match.away}</h4>
                   </div>
                   <ScoreInputs
@@ -1501,7 +1528,7 @@ function CalendarMonth({ month, matches }) {
         type: "day",
         key: dateKey,
         day,
-        matches: matches.filter((match) => match.date === dateKey),
+        matches: matches.filter((match) => montanaDateKey(match.date) === dateKey),
       };
     }),
   ];
@@ -1602,7 +1629,7 @@ function MatchRow({ match }) {
   return (
     <article className="match-row">
       <div>
-        <span>{match.date} · {match.stage}</span>
+        <span>{formatMontanaDate(match.date)} · {match.stage}</span>
         <strong>{match.home} vs {match.away}</strong>
       </div>
       <p>{isFilled(match.homeScore) && isFilled(match.awayScore) ? `${match.homeScore} - ${match.awayScore}` : "No result"}</p>
