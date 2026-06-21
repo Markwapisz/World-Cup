@@ -1569,7 +1569,10 @@ function CalendarMonth({ month, matches }) {
           cell.type === "blank" ? (
             <div className="calendar-day blank" key={cell.key}></div>
           ) : (
-            <article className={`calendar-day ${cell.matches.length ? "has-match" : ""} ${cell.matches.some((match) => isFilled(match.homeScore) && isFilled(match.awayScore)) ? "has-result" : ""}`} key={cell.key}>
+            <article
+              className={`calendar-day ${cell.matches.length ? "has-match" : ""} ${cell.matches.length && cell.matches.every((match) => isFilled(match.homeScore) && isFilled(match.awayScore)) ? "day-complete" : ""}`}
+              key={cell.key}
+            >
               <strong>{cell.day}</strong>
               {cell.matches.map((match) => {
                 const hasScore = isFilled(match.homeScore) && isFilled(match.awayScore);
