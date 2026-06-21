@@ -1024,8 +1024,6 @@ function App() {
   const [championDrafts, setChampionDrafts] = useState(() =>
     Object.fromEntries(pool.players.map((player) => [player.id, player.champion || "United States"])),
   );
-  const [spinningPickId, setSpinningPickId] = useState("");
-  const [pickView, setPickView] = useState("active");
   const [saveStatus, setSaveStatus] = useState(CLOUD_SYNC_ENABLED ? "Connecting to shared pool..." : "Saved locally");
   const cloudReadyRef = useRef(!CLOUD_SYNC_ENABLED);
   const saveTimerRef = useRef(null);
@@ -1238,15 +1236,6 @@ function App() {
     }));
   }
 
-  function spinAndLockPick(playerId, matchId) {
-    const spinId = `${playerId}-${matchId}`;
-    setSpinningPickId(spinId);
-    window.setTimeout(() => {
-      lockPick(playerId, matchId);
-      setSpinningPickId("");
-    }, 950);
-  }
-
   function lockChampion(playerId) {
     const champion = championDrafts[playerId] ?? "United States";
     updatePool((current) => ({
@@ -1362,10 +1351,6 @@ function App() {
               <h3>{selectedPlayer.name}'s Picks</h3>
             </div>
           </div>
-          <div className="pick-view-tabs" aria-label="Pick views">
-            <button className={pickView === "active" ? "active" : ""} onClick={() => setPickView("active")}>Active Picks</button>
-            <button className={pickView === "past" ? "active" : ""} onClick={() => setPickView("past")}>Past Picks</button>
-          </div>
           <div className="champion-row">
             <label>World Cup winner pick</label>
             {selectedPlayer.championLocked ? (
@@ -1382,17 +1367,15 @@ function App() {
               </>
             )}
           </div>
-          {selectedPlayer.championLocked && pickView === "active" ? (
+          {selectedPlayer.championLocked ? (
             <div className="pick-table">
-              {pool.matches.filter((match) => {
+              {pool.matches.map((match) => {
                 const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
-                return !pick?.locked && !(isFilled(match.homeScore) && isFilled(match.awayScore));
-              }).map((match) => {
-                const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
-                const spinId = `${selectedPlayer.id}-${match.id}`;
-                const isSpinning = spinningPickId === spinId;
+                const isLocked = Boolean(pick?.locked);
+                const isClosed = isFilled(match.homeScore) && isFilled(match.awayScore);
+                const isInactive = isLocked || isClosed;
                 return (
-                  <article className={`pick-row ${isSpinning ? "spin-away" : ""}`} key={match.id}>
+                  <article className={`pick-row ${isInactive ? "locked-pick-row" : ""}`} key={match.id}>
                     <div>
                       <span>{formatMatchDate(match)} · {match.stage}</span>
                       <h4>{match.home} vs {match.away}</h4>
@@ -1402,45 +1385,19 @@ function App() {
                       away={pick?.awayScore ?? ""}
                       onHome={(value) => updatePick(selectedPlayer.id, match.id, "homeScore", value)}
                       onAway={(value) => updatePick(selectedPlayer.id, match.id, "awayScore", value)}
+                      disabled={isInactive}
                     />
                     <strong>{scorePick(match, pick, pool.rules)} pts</strong>
-                    <button className="pick-lock" disabled={isSpinning} onClick={() => spinAndLockPick(selectedPlayer.id, match.id)}><Check size={18} /> Lock in</button>
+                    {isLocked ? (
+                      <span className="locked-badge">Locked</span>
+                    ) : isClosed ? (
+                      <span className="locked-badge closed-badge">Closed</span>
+                    ) : (
+                      <button className="pick-lock" onClick={() => lockPick(selectedPlayer.id, match.id)}><Check size={18} /> Lock in</button>
+                    )}
                   </article>
                 );
               })}
-              {pool.matches.every((match) => {
-                const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
-                return pick?.locked || (isFilled(match.homeScore) && isFilled(match.awayScore));
-              }) && (
-                <p className="empty-state">All available picks are locked or closed.</p>
-              )}
-            </div>
-          ) : selectedPlayer.championLocked && pickView === "past" ? (
-            <div className="pick-table past-picks">
-              {pool.matches.filter((match) => {
-                const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
-                return pick?.locked;
-              }).map((match) => {
-                const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
-                return (
-                  <article className="pick-row past-pick-row" key={match.id}>
-                    <div>
-                      <span>{formatMatchDate(match)} · {match.stage}</span>
-                      <h4>{match.home} vs {match.away}</h4>
-                    </div>
-                    <div className="past-score">
-                      <strong>{pick?.homeScore || "0"}</strong>
-                      <span>-</span>
-                      <strong>{pick?.awayScore || "0"}</strong>
-                    </div>
-                    <strong>{scorePick(match, pick, pool.rules)} pts</strong>
-                    <span className="locked-badge">Locked</span>
-                  </article>
-                );
-              })}
-              {pool.picks.every((pick) => pick.playerId !== selectedPlayer.id || !pick.locked) && (
-                <p className="empty-state">No past picks yet.</p>
-              )}
             </div>
           ) : (
             <p className="empty-state champion-required">Lock in a World Cup winner before making game picks.</p>

@@ -1170,34 +1170,6 @@ main > :not(.hero) {
   width: 100%;
 }
 
-.pick-view-tabs {
-  align-items: center;
-  background: rgba(255, 253, 247, 0.58);
-  border: 1px solid rgba(228, 222, 208, 0.72);
-  border-radius: 999px;
-  display: inline-flex;
-  gap: 0.25rem;
-  margin-bottom: 0.85rem;
-  padding: 0.25rem;
-}
-
-.pick-view-tabs button {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  color: #5f5d55;
-  min-height: 2.35rem;
-  padding: 0.55rem 0.9rem;
-}
-
-.pick-view-tabs button.active {
-  background: var(--photo-highlight-gradient);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 253, 247, 0.72),
-    0 0.38rem 0.85rem rgba(111, 77, 22, 0.12);
-  color: var(--warm-highlight-dark);
-}
-
 .pick-row {
   align-items: center;
   display: grid;
@@ -1205,61 +1177,32 @@ main > :not(.hero) {
   grid-template-columns: minmax(0, 1fr) auto 4rem auto;
 }
 
-.past-picks {
-  margin-top: 0.4rem;
+.pick-row.locked-pick-row {
+  background: rgba(229, 225, 216, 0.68);
+  border-color: rgba(177, 169, 154, 0.56);
+  color: #777166;
+  filter: grayscale(0.22);
 }
 
-.past-pick-row {
-  grid-template-columns: minmax(0, 1fr) auto 4rem auto;
+.pick-row.locked-pick-row h4,
+.pick-row.locked-pick-row span,
+.pick-row.locked-pick-row strong {
+  color: #777166;
 }
 
-.past-score {
-  align-items: center;
-  background: rgba(239, 231, 214, 0.74);
-  border: 1px solid rgba(213, 202, 181, 0.64);
-  border-radius: 999px;
-  color: #473827;
-  display: inline-grid;
-  gap: 0.35rem;
-  grid-template-columns: auto auto auto;
-  min-width: 6rem;
-  padding: 0.55rem 0.75rem;
-  text-align: center;
+.pick-row.locked-pick-row .score-inputs input {
+  background: rgba(210, 204, 192, 0.74);
+  border-color: rgba(174, 165, 149, 0.55);
+  color: #716b61;
 }
 
-.past-score strong {
-  font-size: 1rem;
-}
-
-.past-score span {
-  color: #817867;
-  font-weight: 800;
-}
-
-.pick-row.spin-away {
-  animation: fade-away 0.95s ease forwards;
-  transform-origin: center;
+.closed-badge {
+  background: rgba(214, 208, 196, 0.86);
+  color: #6f685e;
 }
 
 .pick-lock {
   min-width: 6.8rem;
-}
-
-@keyframes fade-away {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-
-  65% {
-    opacity: 0.42;
-    transform: translateY(0.18rem) scale(0.99);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateY(0.45rem) scale(0.98);
-  }
 }
 
 .score-inputs {
