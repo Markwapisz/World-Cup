@@ -10,12 +10,20 @@ import {
 import "./styles.css";
 
 const STORAGE_KEY = "family-world-cup-pool-v1";
-const SCHEDULE_VERSION = "fifa-2026-montana-dates-107";
+const SCHEDULE_VERSION = "fifa-2026-group-stage-only-108";
 const CLOUD_ROW_ID = "main";
 const MONTANA_TIME_ZONE = "America/Denver";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const CLOUD_SYNC_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+const removedMatchStages = new Set([
+  "Round of 32",
+  "Round of 16",
+  "Quarterfinal",
+  "Semifinal",
+  "Third-place match",
+  "Final",
+]);
 
 const seedTeams = [
   "Algeria",
@@ -182,6 +190,7 @@ const seedPlayers = [
 ];
 
 const seedPicks = [];
+const activeScheduleMatches = seedMatches.filter((match) => !removedMatchStages.has(match.stage));
 
 const chartColors = ["#d93048", "#156f5a", "#c79624", "#3763b6", "#6f4fb0", "#c45a25", "#24788f", "#8b3f6a"];
 const restoredPointTotals = {
@@ -477,7 +486,7 @@ const worldCupCalendarMonths = [
 
 const initialState = {
   players: seedPlayers,
-  matches: seedMatches,
+  matches: activeScheduleMatches,
   picks: seedPicks,
   teams: seedTeams,
   deletedPlayerIds: [],
@@ -852,14 +861,14 @@ function legacyPoolUpdatedAt(pool) {
 
 function normalizePool(pool) {
   const rules = pool.rules ?? initialState.rules;
-  const shouldUpgradeSchedule = pool.scheduleVersion !== SCHEDULE_VERSION || (pool.matches?.length ?? 0) < seedMatches.length;
+  const shouldUpgradeSchedule = pool.scheduleVersion !== SCHEDULE_VERSION || (pool.matches?.length ?? 0) < activeScheduleMatches.length;
   const deletedPlayerIds = [...new Set(pool.deletedPlayerIds ?? [])];
   const existingMatches = pool.matches ?? initialState.matches;
   const existingMatchesById = new Map(existingMatches.map((match) => [match.id, match]));
-  const seedMatchIds = new Set(seedMatches.map((match) => match.id));
+  const activeScheduleMatchIds = new Set(activeScheduleMatches.map((match) => match.id));
   const scheduleMatches = shouldUpgradeSchedule
     ? [
-      ...seedMatches.map((seedMatch) => {
+      ...activeScheduleMatches.map((seedMatch) => {
         const existingMatch = existingMatchesById.get(seedMatch.id);
         if (!existingMatch) return seedMatch;
         return {
@@ -871,9 +880,9 @@ function normalizePool(pool) {
           updatedAt: existingMatch.updatedAt ?? seedMatch.updatedAt,
         };
       }),
-      ...existingMatches.filter((match) => !seedMatchIds.has(match.id)),
+      ...existingMatches.filter((match) => !activeScheduleMatchIds.has(match.id) && !removedMatchStages.has(match.stage)),
     ]
-    : existingMatches;
+    : existingMatches.filter((match) => !removedMatchStages.has(match.stage));
   const players = (pool.players ?? initialState.players).map((player) => ({
     ...player,
     champion: player.champion ?? "",
@@ -893,6 +902,7 @@ function normalizePool(pool) {
       updatedAt: Number(match.updatedAt || match.resultUpdatedAt || pool.updatedAt || 0),
     };
   });
+  const activeMatchIds = new Set(matches.map((match) => match.id));
   const picks = (pool.picks ?? initialState.picks).map((pick) => {
     const hasEitherScore = isFilled(pick.homeScore) || isFilled(pick.awayScore);
     return {
@@ -902,7 +912,7 @@ function normalizePool(pool) {
       locked: Boolean(pick.locked),
       updatedAt: Number(pick.updatedAt || pool.updatedAt || 0),
     };
-  }).filter((pick) => !deletedPlayerIds.includes(pick.playerId));
+  }).filter((pick) => !deletedPlayerIds.includes(pick.playerId) && activeMatchIds.has(pick.matchId));
 
   return {
     ...initialState,
