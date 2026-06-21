@@ -11,7 +11,7 @@ import {
 import "./styles.css";
 
 const STORAGE_KEY = "family-world-cup-pool-v1";
-const SCHEDULE_VERSION = "fifa-2026-official-104";
+const SCHEDULE_VERSION = "fifa-2026-montana-dates-105";
 const CLOUD_ROW_ID = "main";
 const MONTANA_TIME_ZONE = "America/Denver";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -103,43 +103,43 @@ const seedMatches = [
   { id: "m31", date: "2026-06-20", stage: "Group D", home: "Turkey", away: "Paraguay", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m32", date: "2026-06-19", stage: "Group D", home: "United States", away: "Australia", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m33", date: "2026-06-20", stage: "Group E", home: "Germany", away: "Côte d'Ivoire", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m34", date: "2026-06-21", stage: "Group E", home: "Ecuador", away: "Curaçao", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m34", date: "2026-06-20", stage: "Group E", home: "Ecuador", away: "Curaçao", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m35", date: "2026-06-20", stage: "Group F", home: "Netherlands", away: "Sweden", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m36", date: "2026-06-21", stage: "Group F", home: "Tunisia", away: "Japan", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m36", date: "2026-06-20", stage: "Group F", home: "Tunisia", away: "Japan", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "10:00 PM" },
   { id: "m37", date: "2026-06-21", stage: "Group H", home: "Uruguay", away: "Cabo Verde", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m38", date: "2026-06-21", stage: "Group H", home: "Spain", away: "Saudi Arabia", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m39", date: "2026-06-21", stage: "Group G", home: "Belgium", away: "Iran", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m40", date: "2026-06-22", stage: "Group G", home: "New Zealand", away: "Egypt", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m41", date: "2026-06-23", stage: "Group I", home: "Norway", away: "Senegal", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m40", date: "2026-06-21", stage: "Group G", home: "New Zealand", away: "Egypt", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m41", date: "2026-06-22", stage: "Group I", home: "Norway", away: "Senegal", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m42", date: "2026-06-22", stage: "Group I", home: "France", away: "Iraq", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m43", date: "2026-06-22", stage: "Group J", home: "Argentina", away: "Austria", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m44", date: "2026-06-23", stage: "Group J", home: "Jordan", away: "Algeria", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m44", date: "2026-06-22", stage: "Group J", home: "Jordan", away: "Algeria", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m45", date: "2026-06-23", stage: "Group L", home: "England", away: "Ghana", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m46", date: "2026-06-23", stage: "Group L", home: "Panama", away: "Croatia", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m47", date: "2026-06-23", stage: "Group K", home: "Portugal", away: "Uzbekistan", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m48", date: "2026-06-24", stage: "Group K", home: "Colombia", away: "Congo DR", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m48", date: "2026-06-23", stage: "Group K", home: "Colombia", away: "Congo DR", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m49", date: "2026-06-24", stage: "Group C", home: "Scotland", away: "Brazil", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m50", date: "2026-06-24", stage: "Group C", home: "Morocco", away: "Haiti", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m51", date: "2026-06-24", stage: "Group B", home: "Switzerland", away: "Canada", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m52", date: "2026-06-24", stage: "Group B", home: "Bosnia and Herzegovina", away: "Qatar", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m53", date: "2026-06-25", stage: "Group A", home: "Czechia", away: "Mexico", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m54", date: "2026-06-25", stage: "Group A", home: "South Africa", away: "Korea Republic", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m53", date: "2026-06-24", stage: "Group A", home: "Czechia", away: "Mexico", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m54", date: "2026-06-24", stage: "Group A", home: "South Africa", away: "Korea Republic", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m55", date: "2026-06-25", stage: "Group E", home: "Curaçao", away: "Côte d'Ivoire", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m56", date: "2026-06-25", stage: "Group E", home: "Ecuador", away: "Germany", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m57", date: "2026-06-25", stage: "Group F", home: "Japan", away: "Sweden", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m58", date: "2026-06-25", stage: "Group F", home: "Tunisia", away: "Netherlands", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m59", date: "2026-06-26", stage: "Group D", home: "Turkey", away: "United States", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m60", date: "2026-06-26", stage: "Group D", home: "Paraguay", away: "Australia", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m59", date: "2026-06-25", stage: "Group D", home: "Turkey", away: "United States", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m60", date: "2026-06-25", stage: "Group D", home: "Paraguay", away: "Australia", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m61", date: "2026-06-26", stage: "Group I", home: "Norway", away: "France", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m62", date: "2026-06-26", stage: "Group I", home: "Senegal", away: "Iraq", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m63", date: "2026-06-27", stage: "Group G", home: "Egypt", away: "Iran", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m64", date: "2026-06-27", stage: "Group G", home: "New Zealand", away: "Belgium", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m65", date: "2026-06-27", stage: "Group H", home: "Cabo Verde", away: "Saudi Arabia", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m66", date: "2026-06-27", stage: "Group H", home: "Uruguay", away: "Spain", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m63", date: "2026-06-26", stage: "Group G", home: "Egypt", away: "Iran", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m64", date: "2026-06-26", stage: "Group G", home: "New Zealand", away: "Belgium", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m65", date: "2026-06-26", stage: "Group H", home: "Cabo Verde", away: "Saudi Arabia", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m66", date: "2026-06-26", stage: "Group H", home: "Uruguay", away: "Spain", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m67", date: "2026-06-27", stage: "Group L", home: "Panama", away: "England", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m68", date: "2026-06-27", stage: "Group L", home: "Croatia", away: "Ghana", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m69", date: "2026-06-28", stage: "Group J", home: "Algeria", away: "Austria", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m70", date: "2026-06-28", stage: "Group J", home: "Jordan", away: "Argentina", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m69", date: "2026-06-27", stage: "Group J", home: "Algeria", away: "Austria", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m70", date: "2026-06-27", stage: "Group J", home: "Jordan", away: "Argentina", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m71", date: "2026-06-27", stage: "Group K", home: "Colombia", away: "Portugal", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m72", date: "2026-06-27", stage: "Group K", home: "Congo DR", away: "Uzbekistan", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m73", date: "2026-06-28", stage: "Round of 32", home: "Group A Runner-Up", away: "Group B Runner-Up", homeScore: "", awayScore: "", resultUpdatedAt: "" },
@@ -198,6 +198,11 @@ function montanaNoonDate(dateKey) {
 function formatMontanaDate(dateKey) {
   if (!dateKey) return "";
   return `${montanaDateFormatter.format(montanaNoonDate(dateKey))} MT`;
+}
+
+function formatMatchDate(match) {
+  const dateLabel = formatMontanaDate(match?.date);
+  return match?.timeMt ? `${dateLabel} · ${match.timeMt} MT` : dateLabel;
 }
 
 function montanaDateKey(dateKey) {
@@ -822,13 +827,33 @@ function normalizePool(pool) {
   const rules = pool.rules ?? initialState.rules;
   const shouldUpgradeSchedule = pool.scheduleVersion !== SCHEDULE_VERSION || (pool.matches?.length ?? 0) < seedMatches.length;
   const deletedPlayerIds = [...new Set(pool.deletedPlayerIds ?? [])];
+  const existingMatches = pool.matches ?? initialState.matches;
+  const existingMatchesById = new Map(existingMatches.map((match) => [match.id, match]));
+  const seedMatchIds = new Set(seedMatches.map((match) => match.id));
+  const scheduleMatches = shouldUpgradeSchedule
+    ? [
+      ...seedMatches.map((seedMatch) => {
+        const existingMatch = existingMatchesById.get(seedMatch.id);
+        if (!existingMatch) return seedMatch;
+        return {
+          ...seedMatch,
+          homeScore: existingMatch.homeScore ?? seedMatch.homeScore,
+          awayScore: existingMatch.awayScore ?? seedMatch.awayScore,
+          resultLocked: existingMatch.resultLocked ?? seedMatch.resultLocked,
+          resultUpdatedAt: existingMatch.resultUpdatedAt ?? seedMatch.resultUpdatedAt,
+          updatedAt: existingMatch.updatedAt ?? seedMatch.updatedAt,
+        };
+      }),
+      ...existingMatches.filter((match) => !seedMatchIds.has(match.id)),
+    ]
+    : existingMatches;
   const players = (pool.players ?? initialState.players).map((player) => ({
     ...player,
     champion: player.champion ?? "",
     championLocked: Boolean(player.championLocked),
     updatedAt: Number(player.updatedAt || pool.updatedAt || 0),
   })).filter((player) => !deletedPlayerIds.includes(player.id));
-  const picks = (shouldUpgradeSchedule ? [] : (pool.picks ?? initialState.picks)).map((pick) => {
+  const picks = (pool.picks ?? initialState.picks).map((pick) => {
     const hasEitherScore = isFilled(pick.homeScore) || isFilled(pick.awayScore);
     return {
       ...pick,
@@ -838,7 +863,7 @@ function normalizePool(pool) {
       updatedAt: Number(pick.updatedAt || pool.updatedAt || 0),
     };
   }).filter((pick) => !deletedPlayerIds.includes(pick.playerId));
-  const matches = (shouldUpgradeSchedule ? seedMatches : (pool.matches ?? initialState.matches)).map((match) => {
+  const matches = scheduleMatches.map((match) => {
     const hasEitherScore = isFilled(match.homeScore) || isFilled(match.awayScore);
     const homeScore = normalizeScoreValue(match.homeScore, hasEitherScore);
     const awayScore = normalizeScoreValue(match.awayScore, hasEitherScore);
@@ -1351,7 +1376,7 @@ function App() {
                 return (
                   <article className={`pick-row ${isSpinning ? "spin-away" : ""}`} key={match.id}>
                     <div>
-                      <span>{formatMontanaDate(match.date)} · {match.stage}</span>
+                      <span>{formatMatchDate(match)} · {match.stage}</span>
                       <h4>{match.home} vs {match.away}</h4>
                     </div>
                     <ScoreInputs
@@ -1382,7 +1407,7 @@ function App() {
                 return (
                   <article className="pick-row past-pick-row" key={match.id}>
                     <div>
-                      <span>{formatMontanaDate(match.date)} · {match.stage}</span>
+                      <span>{formatMatchDate(match)} · {match.stage}</span>
                       <h4>{match.home} vs {match.away}</h4>
                     </div>
                     <div className="past-score">
@@ -1480,7 +1505,7 @@ function App() {
               {pool.matches.map((match) => (
                 <article className="result-row" key={match.id}>
                   <div>
-                    <span>{formatMontanaDate(match.date)} · {match.stage}</span>
+                    <span>{formatMatchDate(match)} · {match.stage}</span>
                     <h4>{match.home} vs {match.away}</h4>
                   </div>
                   <ScoreInputs
@@ -1551,6 +1576,7 @@ function CalendarMonth({ month, matches }) {
                 return (
                   <span className={hasScore ? "calendar-game completed" : "calendar-game"} key={match.id}>
                     <b>{match.home} vs {match.away}</b>
+                    {match.timeMt && <em>{match.timeMt} MT</em>}
                     {hasScore && <em>{match.homeScore} - {match.awayScore}</em>}
                   </span>
                 );
@@ -1629,7 +1655,7 @@ function MatchRow({ match }) {
   return (
     <article className="match-row">
       <div>
-        <span>{formatMontanaDate(match.date)} · {match.stage}</span>
+        <span>{formatMatchDate(match)} · {match.stage}</span>
         <strong>{match.home} vs {match.away}</strong>
       </div>
       <p>{isFilled(match.homeScore) && isFilled(match.awayScore) ? `${match.homeScore} - ${match.awayScore}` : "No result"}</p>
