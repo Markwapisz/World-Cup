@@ -10,9 +10,10 @@ import {
 import "./styles.css";
 
 const STORAGE_KEY = "family-world-cup-pool-v1";
-const SCHEDULE_VERSION = "fifa-2026-group-stage-only-108";
+const SCHEDULE_VERSION = "fifa-2026-netherlands-sweden-start-109";
 const CLOUD_ROW_ID = "main";
 const MONTANA_TIME_ZONE = "America/Denver";
+const FIRST_ACTIVE_MATCH_ID = "m35";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const CLOUD_SYNC_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
@@ -190,7 +191,23 @@ const seedPlayers = [
 ];
 
 const seedPicks = [];
-const activeScheduleMatches = seedMatches.filter((match) => !removedMatchStages.has(match.stage));
+const firstActiveMatchNumber = Number(FIRST_ACTIVE_MATCH_ID.replace("m", ""));
+
+function matchNumber(matchId) {
+  const match = String(matchId || "").match(/^m(\d+)$/);
+  return match ? Number(match[1]) : null;
+}
+
+function isBeforeFirstActiveMatch(match) {
+  const number = matchNumber(match.id);
+  return number !== null && number < firstActiveMatchNumber;
+}
+
+function isRemovedMatch(match) {
+  return isBeforeFirstActiveMatch(match) || removedMatchStages.has(match.stage);
+}
+
+const activeScheduleMatches = seedMatches.filter((match) => !isRemovedMatch(match));
 
 const chartColors = ["#d93048", "#156f5a", "#c79624", "#3763b6", "#6f4fb0", "#c45a25", "#24788f", "#8b3f6a"];
 const restoredPointTotals = {
@@ -887,9 +904,9 @@ function normalizePool(pool) {
           updatedAt: existingMatch.updatedAt ?? seedMatch.updatedAt,
         };
       }),
-      ...existingMatches.filter((match) => !activeScheduleMatchIds.has(match.id) && !removedMatchStages.has(match.stage)),
+      ...existingMatches.filter((match) => !activeScheduleMatchIds.has(match.id) && !isRemovedMatch(match)),
     ]
-    : existingMatches.filter((match) => !removedMatchStages.has(match.stage));
+    : existingMatches.filter((match) => !isRemovedMatch(match));
   const players = (pool.players ?? initialState.players).map((player) => ({
     ...player,
     champion: player.champion ?? "",
