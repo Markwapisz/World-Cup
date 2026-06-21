@@ -626,20 +626,27 @@ function normalizedTeamName(team) {
 }
 
 function findVisibleMatch(row, matches) {
+  const idMatch = matches.find((match) => match.id === row.match_id);
+  if (idMatch) return idMatch;
+
   const homeTeam = normalizedTeamName(row.home_team);
   const awayTeam = normalizedTeamName(row.away_team);
   const rowDate = row.match_date || "";
 
-  const teamMatch = matches.find((match) => {
+  const teamMatches = matches.filter((match) => {
     const homeMatches = normalizedTeamName(match.home) === homeTeam;
     const awayMatches = normalizedTeamName(match.away) === awayTeam;
     const reversedHomeMatches = normalizedTeamName(match.home) === awayTeam;
     const reversedAwayMatches = normalizedTeamName(match.away) === homeTeam;
-    const dateMatches = !rowDate || montanaDateKey(rowDate) === montanaDateKey(match.date);
-    return dateMatches && ((homeMatches && awayMatches) || (reversedHomeMatches && reversedAwayMatches));
+    return (homeMatches && awayMatches) || (reversedHomeMatches && reversedAwayMatches);
   });
-  if (teamMatch) return teamMatch;
-  return matches.find((match) => match.id === row.match_id);
+
+  const dateMatch = teamMatches.find((match) => {
+    const dateMatches = !rowDate || montanaDateKey(rowDate) === montanaDateKey(match.date);
+    return dateMatches;
+  });
+  if (dateMatch) return dateMatch;
+  return teamMatches.length === 1 ? teamMatches[0] : null;
 }
 
 function visibleScoresForMatch(row, match) {
