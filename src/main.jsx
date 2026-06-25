@@ -811,6 +811,21 @@ function markPoolUpdated(pool) {
   };
 }
 
+function markBackupRestored(pool) {
+  const restoredAt = Date.now();
+  return {
+    ...pool,
+    players: pool.players.map((player) => ({ ...player, updatedAt: restoredAt })),
+    matches: pool.matches.map((match) => ({
+      ...match,
+      updatedAt: restoredAt,
+      resultUpdatedAt: isFilled(match.homeScore) && isFilled(match.awayScore) ? restoredAt : match.resultUpdatedAt,
+    })),
+    picks: pool.picks.map((pick) => ({ ...pick, updatedAt: restoredAt })),
+    updatedAt: restoredAt,
+  };
+}
+
 function itemUpdatedAt(item) {
   return Number(item?.updatedAt || item?.resultUpdatedAt || 0);
 }
@@ -1296,14 +1311,23 @@ function App() {
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
-        const next = markPoolUpdated(normalizePool(JSON.parse(String(reader.result))));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        const next = markBackupRestored(normalizePool(JSON.parse(String(reader.result))));
+        const nextJson = JSON.stringify(next);
+        localStorage.setItem(STORAGE_KEY, nextJson);
         setPool(next);
         setSelectedPlayerId(next.players?.[0]?.id ?? "");
         setChampionDrafts(Object.fromEntries((next.players ?? []).map((player) => [player.id, player.champion || "United States"])));
-        setSaveStatus("Imported");
+        saveVersionRef.current += 1;
+        if (CLOUD_SYNC_ENABLED) {
+          setSaveStatus("Restoring backup...");
+          await writeCloudPool(next);
+          lastCloudJsonRef.current = nextJson;
+          setSaveStatus("Backup restored");
+        } else {
+          setSaveStatus("Backup restored locally");
+        }
       } catch {
         setSaveStatus("Import failed");
       }
