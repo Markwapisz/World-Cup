@@ -1469,7 +1469,16 @@ main > :not(.hero) {
   align-items: center;
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) minmax(7.5rem, auto) auto auto;
+}
+
+.rule em {
+  color: #15803d;
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
 }
 
 .rule strong {

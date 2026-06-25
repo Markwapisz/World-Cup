@@ -1609,9 +1609,9 @@ function App() {
               </div>
             </div>
             <div className="rule-grid">
-              <RuleValue label="Winner + score" value={pool.rules.exact} />
-              <RuleValue label="Winner + goal difference" value={pool.rules.goalDifference} />
-              <RuleValue label="Winner" value={pool.rules.result} />
+              <RuleValue label="Winner + score" value={pool.rules.exact} note="Scores double in Round of 32" />
+              <RuleValue label="Winner + goal difference" value={pool.rules.goalDifference} note="Scores double in Round of 32" />
+              <RuleValue label="Winner" value={pool.rules.result} note="Scores double in Round of 32" />
               <RuleValue label="World Cup winner" value={pool.rules.champion} />
             </div>
           </div>
@@ -1822,10 +1822,11 @@ function ScoreInputs({ home, away, onHome, onAway, disabled = false }) {
   );
 }
 
-function RuleValue({ label, value }) {
+function RuleValue({ label, value, note = "" }) {
   return (
     <article className="rule">
       <span>{label}</span>
+      {note && <em>{note}</em>}
       <strong>{value}</strong>
       <Medal size={20} />
     </article>
