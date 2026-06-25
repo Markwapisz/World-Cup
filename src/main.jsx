@@ -528,6 +528,10 @@ function poolHasFamilyData(pool) {
   return hasCustomPlayers || hasPicks || hasResults || hasDeletedPlayers;
 }
 
+function completedResultCount(pool) {
+  return (pool.matches ?? []).filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore)).length;
+}
+
 function getStoredState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -568,6 +572,9 @@ async function saveCloudPool(pool) {
   const cloudPool = await loadCloudPool();
   const mergedPool = cloudPool ? mergePoolStates(cloudPool, pool) : normalizePool(pool);
   const correctedPool = await loadPoolWithVisibleTableEdits(mergedPool);
+  if (cloudPool && completedResultCount(correctedPool) < completedResultCount(cloudPool)) {
+    throw new Error("Refusing to save fewer completed results than the shared pool already has");
+  }
   await writeCloudPool(correctedPool);
   return correctedPool;
 }
@@ -837,6 +844,20 @@ function newestItem(first, second) {
   return first;
 }
 
+function hasCompleteScore(item) {
+  return isFilled(item?.homeScore) && isFilled(item?.awayScore);
+}
+
+function protectedNewestItem(first, second) {
+  if (!first) return second;
+  if (!second) return first;
+  const firstHasScore = hasCompleteScore(first);
+  const secondHasScore = hasCompleteScore(second);
+  if (firstHasScore && !secondHasScore) return first;
+  if (secondHasScore && !firstHasScore) return second;
+  return newestItem(first, second);
+}
+
 function mergeById(firstItems, secondItems) {
   const merged = new Map();
   [...firstItems, ...secondItems].forEach((item) => {
@@ -850,7 +871,7 @@ function mergePicks(firstPicks, secondPicks) {
   [...firstPicks, ...secondPicks].forEach((pick) => {
     const key = `${pick.playerId}-${pick.matchId}`;
     const current = merged.get(key);
-    const next = newestItem(current, pick);
+    const next = protectedNewestItem(current, pick);
     merged.set(key, {
       ...next,
       locked: Boolean(current?.locked || pick.locked || next.locked),
@@ -863,8 +884,8 @@ function mergeMatches(firstMatches, secondMatches) {
   const merged = new Map();
   [...firstMatches, ...secondMatches].forEach((match) => {
     const current = merged.get(match.id);
-    const next = newestItem(current, match);
-    const hasScore = isFilled(next.homeScore) && isFilled(next.awayScore);
+    const next = protectedNewestItem(current, match);
+    const hasScore = hasCompleteScore(next);
     merged.set(match.id, {
       ...next,
       resultLocked: hasScore && Boolean(current?.resultLocked || match.resultLocked || next.resultLocked),
