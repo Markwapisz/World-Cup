@@ -10,6 +10,8 @@ import {
 import "./styles.css";
 
 const STORAGE_KEY = "family-world-cup-pool-v1";
+const LOCAL_BACKUPS_KEY = "family-world-cup-pool-local-backups-v1";
+const MAX_LOCAL_BACKUPS = 30;
 const SCHEDULE_VERSION = "fifa-2026-netherlands-sweden-start-109";
 const CLOUD_ROW_ID = "main";
 const MONTANA_TIME_ZONE = "America/Denver";
@@ -530,6 +532,48 @@ function poolHasFamilyData(pool) {
 
 function completedResultCount(pool) {
   return (pool.matches ?? []).filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore)).length;
+}
+
+function backupFingerprint(pool) {
+  return JSON.stringify({
+    players: (pool.players ?? []).map((player) => [player.id, player.name, player.champion, player.championLocked]),
+    matches: (pool.matches ?? []).map((match) => [match.id, match.homeScore, match.awayScore, match.resultLocked]),
+    picks: (pool.picks ?? []).map((pick) => [pick.playerId, pick.matchId, pick.homeScore, pick.awayScore, pick.locked]),
+    deletedPlayerIds: pool.deletedPlayerIds ?? [],
+  });
+}
+
+function getLocalBackups() {
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_BACKUPS_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalBackup(pool, force = false) {
+  const normalized = normalizePool(pool);
+  const completedResults = completedResultCount(normalized);
+  if (!force && completedResults === 0) return getLocalBackups();
+
+  const fingerprint = backupFingerprint(normalized);
+  const backups = getLocalBackups();
+  if (!force && backups[0]?.fingerprint === fingerprint) return backups;
+
+  const nextBackups = [
+    {
+      id: `backup-${Date.now()}`,
+      createdAt: Date.now(),
+      completedResults,
+      players: normalized.players.length,
+      fingerprint,
+      data: normalized,
+    },
+    ...backups.filter((backup) => backup.fingerprint !== fingerprint),
+  ].slice(0, MAX_LOCAL_BACKUPS);
+
+  localStorage.setItem(LOCAL_BACKUPS_KEY, JSON.stringify(nextBackups));
+  return nextBackups;
 }
 
 function getStoredState() {
@@ -1094,6 +1138,7 @@ function App() {
   const [championDrafts, setChampionDrafts] = useState(() =>
     Object.fromEntries(pool.players.map((player) => [player.id, player.champion || "United States"])),
   );
+  const [localBackups, setLocalBackups] = useState(getLocalBackups);
   const [saveStatus, setSaveStatus] = useState(CLOUD_SYNC_ENABLED ? "Connecting to shared pool..." : "Saved locally");
   const cloudReadyRef = useRef(!CLOUD_SYNC_ENABLED);
   const saveTimerRef = useRef(null);
@@ -1140,6 +1185,10 @@ function App() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    setLocalBackups(saveLocalBackup(pool));
+  }, [pool]);
 
   useEffect(() => {
     if (!CLOUD_SYNC_ENABLED || !cloudReadyRef.current) return undefined;
@@ -1328,32 +1377,52 @@ function App() {
     URL.revokeObjectURL(url);
   }
 
+  async function restorePoolBackup(data) {
+    const next = markBackupRestored(normalizePool(data));
+    const nextJson = JSON.stringify(next);
+    localStorage.setItem(STORAGE_KEY, nextJson);
+    setPool(next);
+    setSelectedPlayerId(next.players?.[0]?.id ?? "");
+    setChampionDrafts(Object.fromEntries((next.players ?? []).map((player) => [player.id, player.champion || "United States"])));
+    setLocalBackups(saveLocalBackup(next, true));
+    saveVersionRef.current += 1;
+    if (CLOUD_SYNC_ENABLED) {
+      setSaveStatus("Restoring backup...");
+      await writeCloudPool(next);
+      lastCloudJsonRef.current = nextJson;
+      setSaveStatus("Backup restored");
+    } else {
+      setSaveStatus("Backup restored locally");
+    }
+  }
+
   function importPool(event) {
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async () => {
       try {
-        const next = markBackupRestored(normalizePool(JSON.parse(String(reader.result))));
-        const nextJson = JSON.stringify(next);
-        localStorage.setItem(STORAGE_KEY, nextJson);
-        setPool(next);
-        setSelectedPlayerId(next.players?.[0]?.id ?? "");
-        setChampionDrafts(Object.fromEntries((next.players ?? []).map((player) => [player.id, player.champion || "United States"])));
-        saveVersionRef.current += 1;
-        if (CLOUD_SYNC_ENABLED) {
-          setSaveStatus("Restoring backup...");
-          await writeCloudPool(next);
-          lastCloudJsonRef.current = nextJson;
-          setSaveStatus("Backup restored");
-        } else {
-          setSaveStatus("Backup restored locally");
-        }
+        await restorePoolBackup(JSON.parse(String(reader.result)));
       } catch {
         setSaveStatus("Import failed");
       }
     };
     reader.readAsText(file);
+  }
+
+  async function restoreLatestLocalBackup() {
+    const latestBackup = localBackups[0];
+    if (!latestBackup?.data) return;
+    try {
+      await restorePoolBackup(latestBackup.data);
+    } catch {
+      setSaveStatus("Local backup restore failed");
+    }
+  }
+
+  function saveLocalBackupNow() {
+    setLocalBackups(saveLocalBackup(pool, true));
+    setSaveStatus("Local backup saved");
   }
 
   const tabs = [
@@ -1560,7 +1629,14 @@ function App() {
                 Import backup
                 <input type="file" accept="application/json" onChange={importPool} />
               </label>
+              <button onClick={saveLocalBackupNow}>Save local backup now</button>
+              <button disabled={!localBackups.length} onClick={restoreLatestLocalBackup}>Restore latest local backup</button>
             </div>
+            <p className="recovery-status">
+              {localBackups.length
+                ? `${localBackups.length} local backups saved. Latest: ${new Date(localBackups[0].createdAt).toLocaleString()} with ${localBackups[0].completedResults} results.`
+                : "No local backups saved yet."}
+            </p>
             <p className="recovery-status">{saveStatus}</p>
           </div>
 
