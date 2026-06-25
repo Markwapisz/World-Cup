@@ -1619,8 +1619,7 @@ function App() {
           <div className="panel recovery-panel">
             <div className="section-title">
               <div>
-                <h3>Recovery Import</h3>
-                <p>Use this only to restore a saved backup.</p>
+                <h3>Disaster Box</h3>
               </div>
             </div>
             <div className="recovery-actions">

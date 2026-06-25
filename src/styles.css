@@ -807,6 +807,10 @@ main > :not(.hero) {
   gap: 0.75rem;
 }
 
+.recovery-panel h3 {
+  color: #b42318;
+}
+
 .recovery-status {
   color: #64645c;
   font-weight: 800;
