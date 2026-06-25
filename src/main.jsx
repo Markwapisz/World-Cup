@@ -1502,6 +1502,23 @@ function App() {
             </div>
           </div>
 
+          <div className="panel recovery-panel">
+            <div className="section-title">
+              <div>
+                <h3>Recovery Import</h3>
+                <p>Use this only to restore a saved backup.</p>
+              </div>
+            </div>
+            <div className="recovery-actions">
+              <button onClick={exportPool}>Export current data</button>
+              <label className="file-button">
+                Import backup
+                <input type="file" accept="application/json" onChange={importPool} />
+              </label>
+            </div>
+            <p className="recovery-status">{saveStatus}</p>
+          </div>
+
           <div className="panel">
             <div className="section-title">
               <div>

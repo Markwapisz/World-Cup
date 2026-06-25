@@ -801,6 +801,18 @@ main > :not(.hero) {
   gap: 1rem;
 }
 
+.recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.recovery-status {
+  color: #64645c;
+  font-weight: 800;
+  margin: 0.8rem 0 0;
+}
+
 .two-col {
   display: grid;
   gap: 1rem;
