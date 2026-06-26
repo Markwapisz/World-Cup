@@ -534,6 +534,33 @@ function completedResultCount(pool) {
   return (pool.matches ?? []).filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore)).length;
 }
 
+function lostCompletedResultIds(beforePool, afterPool) {
+  const afterMatchesById = new Map((afterPool.matches ?? []).map((match) => [match.id, match]));
+  return (beforePool.matches ?? [])
+    .filter((beforeMatch) => {
+      const afterMatch = afterMatchesById.get(beforeMatch.id);
+      return hasCompleteScore(beforeMatch) && !hasCompleteScore(afterMatch);
+    })
+    .map((match) => match.id);
+}
+
+function hasNewerLocalResultClear(matchId, cloudPool, localPool) {
+  const cloudMatch = (cloudPool.matches ?? []).find((match) => match.id === matchId);
+  const localMatch = (localPool.matches ?? []).find((match) => match.id === matchId);
+  return Boolean(
+    cloudMatch
+    && localMatch
+    && !hasCompleteScore(localMatch)
+    && itemUpdatedAt(localMatch) > itemUpdatedAt(cloudMatch),
+  );
+}
+
+function shouldAllowResultClear(cloudPool, nextPool, localPool) {
+  const lostIds = lostCompletedResultIds(cloudPool, nextPool);
+  if (!lostIds.length) return true;
+  return lostIds.length <= 1 && lostIds.every((matchId) => hasNewerLocalResultClear(matchId, cloudPool, localPool));
+}
+
 function backupFingerprint(pool) {
   return JSON.stringify({
     players: (pool.players ?? []).map((player) => [player.id, player.name, player.champion, player.championLocked]),
@@ -615,12 +642,11 @@ async function saveCloudPool(pool) {
   if (!CLOUD_SYNC_ENABLED) return;
   const cloudPool = await loadCloudPool();
   const mergedPool = cloudPool ? mergePoolStates(cloudPool, pool) : normalizePool(pool);
-  const correctedPool = await loadPoolWithVisibleTableEdits(mergedPool);
-  if (cloudPool && completedResultCount(correctedPool) < completedResultCount(cloudPool)) {
+  if (cloudPool && !shouldAllowResultClear(cloudPool, mergedPool, normalizePool(pool))) {
     throw new Error("Refusing to save fewer completed results than the shared pool already has");
   }
-  await writeCloudPool(correctedPool);
-  return correctedPool;
+  await writeCloudPool(mergedPool);
+  return mergedPool;
 }
 
 async function writeCloudPool(pool) {
