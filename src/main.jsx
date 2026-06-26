@@ -907,8 +907,12 @@ function protectedNewestItem(first, second) {
   if (!second) return first;
   const firstHasScore = hasCompleteScore(first);
   const secondHasScore = hasCompleteScore(second);
-  if (firstHasScore && !secondHasScore) return first;
-  if (secondHasScore && !firstHasScore) return second;
+  if (firstHasScore !== secondHasScore) {
+    const firstUpdatedAt = itemUpdatedAt(first);
+    const secondUpdatedAt = itemUpdatedAt(second);
+    if (firstUpdatedAt !== secondUpdatedAt) return secondUpdatedAt > firstUpdatedAt ? second : first;
+    return firstHasScore ? first : second;
+  }
   return newestItem(first, second);
 }
 
