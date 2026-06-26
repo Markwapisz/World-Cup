@@ -686,7 +686,7 @@ function visibleScoreValue(value) {
 }
 
 function visibleRowTimestamp(row) {
-  return Math.max(Date.parse(row.updated_at || row.result_updated_at || "") || 0, Date.now());
+  return Math.max(Date.parse(row.updated_at || "") || 0, Date.parse(row.result_updated_at || "") || 0);
 }
 
 function normalizedTeamName(team) {
@@ -741,17 +741,21 @@ function applyVisibleTableEdits(pool, resultRows, pickRows) {
     const row = resultRowsByMatchId.get(match.id);
     const { homeScore, awayScore } = row ? visibleScoresForMatch(row, match) : { homeScore: "", awayScore: "" };
     if (!row || !isFilled(homeScore) || !isFilled(awayScore)) return match;
+    const rowTimestamp = visibleRowTimestamp(row);
+    const matchTimestamp = itemUpdatedAt(match);
+    if (hasAnyScore(match) && (!rowTimestamp || rowTimestamp < matchTimestamp)) return match;
     if (match.homeScore === homeScore && match.awayScore === awayScore && Boolean(match.resultLocked) === Boolean(row.result_locked)) {
       return match;
     }
 
+    const updatedAt = rowTimestamp || Date.now();
     return {
       ...match,
       homeScore,
       awayScore,
       resultLocked: Boolean(row.result_locked || match.resultLocked),
-      resultUpdatedAt: visibleRowTimestamp(row),
-      updatedAt: visibleRowTimestamp(row),
+      resultUpdatedAt: updatedAt,
+      updatedAt,
     };
   });
 
@@ -764,6 +768,8 @@ function applyVisibleTableEdits(pool, resultRows, pickRows) {
 
     const key = `${player.id}-${match.id}`;
     const existingPick = picksByKey.get(key);
+    const rowTimestamp = visibleRowTimestamp(row);
+    if (hasAnyScore(existingPick) && (!rowTimestamp || rowTimestamp < itemUpdatedAt(existingPick))) return;
     if (
       existingPick
       && existingPick.homeScore === homeScore
@@ -778,7 +784,7 @@ function applyVisibleTableEdits(pool, resultRows, pickRows) {
       homeScore,
       awayScore,
       locked: Boolean(row.locked || existingPick?.locked),
-      updatedAt: visibleRowTimestamp(row),
+      updatedAt: rowTimestamp || Date.now(),
     });
   });
 
@@ -890,6 +896,10 @@ function newestItem(first, second) {
 
 function hasCompleteScore(item) {
   return isFilled(item?.homeScore) && isFilled(item?.awayScore);
+}
+
+function hasAnyScore(item) {
+  return isFilled(item?.homeScore) || isFilled(item?.awayScore);
 }
 
 function protectedNewestItem(first, second) {
