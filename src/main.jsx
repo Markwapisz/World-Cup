@@ -12,15 +12,16 @@ import "./styles.css";
 const STORAGE_KEY = "family-world-cup-pool-v1";
 const LOCAL_BACKUPS_KEY = "family-world-cup-pool-local-backups-v1";
 const MAX_LOCAL_BACKUPS = 30;
-const SCHEDULE_VERSION = "fifa-2026-netherlands-sweden-start-109";
+const SCHEDULE_VERSION = "fifa-2026-round-of-32-start-110";
 const CLOUD_ROW_ID = "main";
 const MONTANA_TIME_ZONE = "America/Denver";
 const FIRST_ACTIVE_MATCH_ID = "m35";
+const CURRENT_ROUND_STAGE = "Round of 32";
+const CURRENT_ROUND_START_DATE = "2026-06-28";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const CLOUD_SYNC_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 const removedMatchStages = new Set([
-  "Round of 32",
   "Round of 16",
   "Quarterfinal",
   "Semifinal",
@@ -242,6 +243,10 @@ function formatMontanaDate(dateKey) {
 function formatMatchDate(match) {
   const dateLabel = formatMontanaDate(match?.date);
   return match?.timeMt ? `${dateLabel} · ${match.timeMt} MT` : dateLabel;
+}
+
+function isCurrentRoundMatch(match) {
+  return match?.stage === CURRENT_ROUND_STAGE && String(match?.date || "") >= CURRENT_ROUND_START_DATE;
 }
 
 function montanaDateKey(dateKey) {
@@ -1276,7 +1281,10 @@ function App() {
       .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
   }, [pool]);
 
-  const completedMatches = pool.matches.filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore)).length;
+  const currentRoundMatches = useMemo(() => (
+    pool.matches.filter(isCurrentRoundMatch)
+  ), [pool.matches]);
+  const completedCurrentRoundMatches = currentRoundMatches.filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore)).length;
   const recentResults = useMemo(() => (
     pool.matches
       .filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore))
@@ -1557,7 +1565,7 @@ function App() {
           </div>
           {selectedPlayer.championLocked ? (
             <div className="pick-table">
-              {pool.matches.map((match) => {
+              {currentRoundMatches.map((match) => {
                 const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
                 const isLocked = Boolean(pick?.locked);
                 const isClosed = isFilled(match.homeScore) && isFilled(match.awayScore);
@@ -1586,6 +1594,9 @@ function App() {
                   </article>
                 );
               })}
+              {currentRoundMatches.length === 0 && (
+                <p className="empty-state">No current games to pick yet.</p>
+              )}
             </div>
           ) : (
             <p className="empty-state champion-required">Lock in a World Cup winner before making game picks.</p>
@@ -1608,7 +1619,7 @@ function App() {
           </div>
           <div className="calendar-grid">
             {worldCupCalendarMonths.map((month) => (
-              <CalendarMonth key={month.label} month={month} matches={pool.matches} />
+              <CalendarMonth key={month.label} month={month} matches={currentRoundMatches} />
             ))}
           </div>
         </section>
@@ -1685,10 +1696,10 @@ function App() {
                 <h3>Game Results</h3>
                 <p className="danger-note">DO NOT TOUCH</p>
               </div>
-              <span>{completedMatches}/{pool.matches.length} scored</span>
+              <span>{completedCurrentRoundMatches}/{currentRoundMatches.length} scored</span>
             </div>
             <div className="results-list">
-              {pool.matches.map((match) => (
+              {currentRoundMatches.map((match) => (
                 <article className="result-row" key={match.id}>
                   <div>
                     <span>{formatMatchDate(match)} · {match.stage}</span>
@@ -1714,6 +1725,9 @@ function App() {
                   )}
                 </article>
               ))}
+              {currentRoundMatches.length === 0 && (
+                <p className="empty-state">No current games to score yet.</p>
+              )}
             </div>
           </div>
         </section>
