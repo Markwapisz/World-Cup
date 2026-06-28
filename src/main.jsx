@@ -12,7 +12,7 @@ import "./styles.css";
 const STORAGE_KEY = "family-world-cup-pool-v1";
 const LOCAL_BACKUPS_KEY = "family-world-cup-pool-local-backups-v1";
 const MAX_LOCAL_BACKUPS = 30;
-const SCHEDULE_VERSION = "fifa-2026-round-of-32-teams-111";
+const SCHEDULE_VERSION = "fifa-2026-round-of-32-montana-time-112";
 const CLOUD_ROW_ID = "main";
 const MONTANA_TIME_ZONE = "America/Denver";
 const FIRST_ACTIVE_MATCH_ID = "m35";
@@ -158,22 +158,22 @@ const seedMatches = [
   { id: "m70", date: "2026-06-27", stage: "Group J", home: "Jordan", away: "Argentina", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m71", date: "2026-06-27", stage: "Group K", home: "Colombia", away: "Portugal", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m72", date: "2026-06-27", stage: "Group K", home: "Congo DR", away: "Uzbekistan", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m73", date: "2026-06-28", stage: "Round of 32", home: "South Africa", away: "Canada", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m74", date: "2026-06-29", stage: "Round of 32", home: "Germany", away: "Paraguay", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m75", date: "2026-06-30", stage: "Round of 32", home: "Netherlands", away: "Morocco", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m76", date: "2026-06-29", stage: "Round of 32", home: "Brazil", away: "Japan", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m77", date: "2026-06-30", stage: "Round of 32", home: "France", away: "Sweden", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m78", date: "2026-06-30", stage: "Round of 32", home: "Côte d'Ivoire", away: "Norway", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m79", date: "2026-07-01", stage: "Round of 32", home: "Mexico", away: "Ecuador", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m80", date: "2026-07-01", stage: "Round of 32", home: "England", away: "Congo DR", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m81", date: "2026-07-02", stage: "Round of 32", home: "United States", away: "Bosnia and Herzegovina", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m82", date: "2026-07-01", stage: "Round of 32", home: "Belgium", away: "Senegal", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m83", date: "2026-07-02", stage: "Round of 32", home: "Portugal", away: "Croatia", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m84", date: "2026-07-02", stage: "Round of 32", home: "Spain", away: "Austria", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m85", date: "2026-07-03", stage: "Round of 32", home: "Switzerland", away: "Algeria", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m86", date: "2026-07-03", stage: "Round of 32", home: "Argentina", away: "Cabo Verde", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m87", date: "2026-07-04", stage: "Round of 32", home: "Colombia", away: "Ghana", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m88", date: "2026-07-03", stage: "Round of 32", home: "Australia", away: "Egypt", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m73", date: "2026-06-28", stage: "Round of 32", home: "South Africa", away: "Canada", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "1:00 PM" },
+  { id: "m74", date: "2026-06-29", stage: "Round of 32", home: "Germany", away: "Paraguay", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "2:30 PM" },
+  { id: "m75", date: "2026-06-29", stage: "Round of 32", home: "Netherlands", away: "Morocco", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "7:00 PM" },
+  { id: "m76", date: "2026-06-29", stage: "Round of 32", home: "Brazil", away: "Japan", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "11:00 AM" },
+  { id: "m77", date: "2026-06-30", stage: "Round of 32", home: "France", away: "Sweden", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "3:00 PM" },
+  { id: "m78", date: "2026-06-30", stage: "Round of 32", home: "Côte d'Ivoire", away: "Norway", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "11:00 AM" },
+  { id: "m79", date: "2026-06-30", stage: "Round of 32", home: "Mexico", away: "Ecuador", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "7:00 PM" },
+  { id: "m80", date: "2026-07-01", stage: "Round of 32", home: "England", away: "Congo DR", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "10:00 AM" },
+  { id: "m81", date: "2026-07-01", stage: "Round of 32", home: "United States", away: "Bosnia and Herzegovina", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "6:00 PM" },
+  { id: "m82", date: "2026-07-01", stage: "Round of 32", home: "Belgium", away: "Senegal", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "2:00 PM" },
+  { id: "m83", date: "2026-07-02", stage: "Round of 32", home: "Portugal", away: "Croatia", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "5:00 PM" },
+  { id: "m84", date: "2026-07-02", stage: "Round of 32", home: "Spain", away: "Austria", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "1:00 PM" },
+  { id: "m85", date: "2026-07-02", stage: "Round of 32", home: "Switzerland", away: "Algeria", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "9:00 PM" },
+  { id: "m86", date: "2026-07-03", stage: "Round of 32", home: "Argentina", away: "Cabo Verde", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "4:00 PM" },
+  { id: "m87", date: "2026-07-03", stage: "Round of 32", home: "Colombia", away: "Ghana", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "7:30 PM" },
+  { id: "m88", date: "2026-07-03", stage: "Round of 32", home: "Australia", away: "Egypt", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "12:00 PM" },
   { id: "m89", date: "2026-07-04", stage: "Round of 16", home: "Match 74 Winner", away: "Match 77 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m90", date: "2026-07-04", stage: "Round of 16", home: "Match 73 Winner", away: "Match 75 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m91", date: "2026-07-05", stage: "Round of 16", home: "Match 76 Winner", away: "Match 78 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
@@ -248,6 +248,16 @@ function formatMontanaDate(dateKey) {
 function formatMatchDate(match) {
   const dateLabel = formatMontanaDate(match?.date);
   return match?.timeMt ? `${dateLabel} · ${match.timeMt} MT` : dateLabel;
+}
+
+function timeMtSortValue(timeMt) {
+  const match = String(timeMt || "").match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  const [, hourText, minuteText, periodText] = match;
+  const hour = Number(hourText) % 12;
+  const minute = Number(minuteText);
+  const periodOffset = periodText.toUpperCase() === "PM" ? 12 * 60 : 0;
+  return periodOffset + hour * 60 + minute;
 }
 
 function isCurrentRoundMatch(match) {
@@ -1794,51 +1804,41 @@ function App() {
 }
 
 function CalendarMonth({ month, matches }) {
-  const firstDay = new Date(month.year, month.month, 1);
-  const daysInMonth = new Date(month.year, month.month + 1, 0).getDate();
-  const leadingBlanks = firstDay.getDay();
-  const cells = [
-    ...Array.from({ length: leadingBlanks }, (_, index) => ({ type: "blank", key: `blank-${index}` })),
-    ...Array.from({ length: daysInMonth }, (_, index) => {
-      const day = index + 1;
-      const dateKey = `${month.year}-${String(month.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      return {
-        type: "day",
-        key: dateKey,
-        day,
-        matches: matches.filter((match) => montanaDateKey(match.date) === dateKey),
-      };
-    }),
-  ];
+  const monthPrefix = `${month.year}-${String(month.month + 1).padStart(2, "0")}`;
+  const visibleDays = Array.from(new Set(matches.map((match) => montanaDateKey(match.date))))
+    .filter((dateKey) => dateKey.startsWith(monthPrefix) && dateKey >= CURRENT_ROUND_START_DATE)
+    .sort()
+    .map((dateKey) => ({
+      dateKey,
+      day: Number(dateKey.slice(-2)),
+      matches: matches
+        .filter((match) => montanaDateKey(match.date) === dateKey)
+        .sort((a, b) => timeMtSortValue(a.timeMt) - timeMtSortValue(b.timeMt)),
+    }));
+
+  if (!visibleDays.length) return null;
 
   return (
     <section className="calendar-month">
       <h4>{month.label}</h4>
-      <div className="weekdays">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <span key={day}>{day}</span>)}
-      </div>
-      <div className="calendar-days">
-        {cells.map((cell) => (
-          cell.type === "blank" ? (
-            <div className="calendar-day blank" key={cell.key}></div>
-          ) : (
-            <article
-              className={`calendar-day ${cell.matches.length ? "has-match" : ""} ${cell.matches.length && cell.matches.every((match) => hasCompleteMatchResult(match)) ? "day-complete" : ""} ${month.year === 2026 && month.month === 5 && cell.day === 26 ? "group-deadline" : ""}`}
-              data-deadline="All Group stage bets due!!!"
-              key={cell.key}
-            >
-              <strong>{cell.day}</strong>
-              {cell.matches.map((match) => {
-                const hasScore = hasCompleteMatchResult(match);
-                return (
-                  <span className={hasScore ? "calendar-game completed" : "calendar-game"} key={match.id}>
-                    <b>{match.home} vs {match.away}</b>
-                    {hasScore && <em>{match.homeScore} - {match.awayScore}</em>}
-                  </span>
-                );
-              })}
-            </article>
-          )
+      <div className="calendar-days upcoming-days">
+        {visibleDays.map((cell) => (
+          <article
+            className={`calendar-day has-match ${cell.matches.every((match) => hasCompleteMatchResult(match)) ? "day-complete" : ""}`}
+            key={cell.dateKey}
+          >
+            <strong>{formatMontanaDate(cell.dateKey)}</strong>
+            {cell.matches.map((match) => {
+              const hasScore = hasCompleteMatchResult(match);
+              return (
+                <span className={hasScore ? "calendar-game completed" : "calendar-game"} key={match.id}>
+                  <b>{match.home} vs {match.away}</b>
+                  <small>{match.timeMt ? `${match.timeMt} MT` : "Time TBD"}</small>
+                  {hasScore && <em>{match.homeScore} - {match.awayScore}</em>}
+                </span>
+              );
+            })}
+          </article>
         ))}
       </div>
     </section>
