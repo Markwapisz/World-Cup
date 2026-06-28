@@ -19,9 +19,9 @@ const FIRST_ACTIVE_MATCH_ID = "m35";
 const CURRENT_ROUND_STAGE = "Round of 32";
 const CURRENT_ROUND_START_DATE = "2026-06-28";
 const ROUND_OF_32_RULES = {
-  exact: 20,
-  goalDifference: 14,
-  result: 10,
+  exact: 50,
+  goalDifference: 30,
+  result: 20,
 };
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
