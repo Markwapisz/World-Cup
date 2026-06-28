@@ -541,7 +541,7 @@ function poolHasFamilyData(pool) {
 }
 
 function completedResultCount(pool) {
-  return (pool.matches ?? []).filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore)).length;
+  return (pool.matches ?? []).filter((match) => hasCompleteMatchResult(match)).length;
 }
 
 function lostCompletedResultIds(beforePool, afterPool) {
@@ -574,8 +574,8 @@ function shouldAllowResultClear(cloudPool, nextPool, localPool) {
 function backupFingerprint(pool) {
   return JSON.stringify({
     players: (pool.players ?? []).map((player) => [player.id, player.name, player.champion, player.championLocked]),
-    matches: (pool.matches ?? []).map((match) => [match.id, match.homeScore, match.awayScore, match.resultLocked]),
-    picks: (pool.picks ?? []).map((pick) => [pick.playerId, pick.matchId, pick.homeScore, pick.awayScore, pick.locked]),
+    matches: (pool.matches ?? []).map((match) => [match.id, match.homeScore, match.awayScore, match.winner, match.resultLocked]),
+    picks: (pool.picks ?? []).map((pick) => [pick.playerId, pick.matchId, pick.homeScore, pick.awayScore, pick.winner, pick.locked]),
     deletedPlayerIds: pool.deletedPlayerIds ?? [],
   });
 }
@@ -912,7 +912,7 @@ function markBackupRestored(pool) {
     matches: pool.matches.map((match) => ({
       ...match,
       updatedAt: restoredAt,
-      resultUpdatedAt: isFilled(match.homeScore) && isFilled(match.awayScore) ? restoredAt : match.resultUpdatedAt,
+      resultUpdatedAt: hasCompleteMatchResult(match) ? restoredAt : match.resultUpdatedAt,
     })),
     picks: pool.picks.map((pick) => ({ ...pick, updatedAt: restoredAt })),
     updatedAt: restoredAt,
@@ -979,7 +979,7 @@ function mergeMatches(firstMatches, secondMatches) {
   [...firstMatches, ...secondMatches].forEach((match) => {
     const current = merged.get(match.id);
     const next = protectedNewestItem(current, match);
-    const hasScore = hasCompleteScore(next);
+    const hasScore = hasCompleteMatchResult(next);
     merged.set(match.id, {
       ...next,
       resultLocked: hasScore && Boolean(current?.resultLocked || match.resultLocked || next.resultLocked),
@@ -1029,6 +1029,7 @@ function normalizePool(pool) {
           ...seedMatch,
           homeScore: existingMatch.homeScore ?? seedMatch.homeScore,
           awayScore: existingMatch.awayScore ?? seedMatch.awayScore,
+          winner: existingMatch.winner ?? seedMatch.winner,
           resultLocked: existingMatch.resultLocked ?? seedMatch.resultLocked,
           resultUpdatedAt: existingMatch.resultUpdatedAt ?? seedMatch.resultUpdatedAt,
           updatedAt: existingMatch.updatedAt ?? seedMatch.updatedAt,
@@ -1051,8 +1052,9 @@ function normalizePool(pool) {
       ...match,
       homeScore,
       awayScore,
+      winner: normalizeWinner(match.winner),
       resultUpdatedAt: match.resultUpdatedAt ?? "",
-      resultLocked: Boolean(match.resultLocked) && isFilled(homeScore) && isFilled(awayScore),
+      resultLocked: Boolean(match.resultLocked) && hasCompleteMatchResult({ ...match, homeScore, awayScore, winner: normalizeWinner(match.winner) }),
       updatedAt: Number(match.updatedAt || match.resultUpdatedAt || pool.updatedAt || 0),
     };
   });
@@ -1063,6 +1065,7 @@ function normalizePool(pool) {
       ...pick,
       homeScore: normalizeScoreValue(pick.homeScore, hasEitherScore),
       awayScore: normalizeScoreValue(pick.awayScore, hasEitherScore),
+      winner: normalizeWinner(pick.winner),
       locked: Boolean(pick.locked),
       updatedAt: Number(pick.updatedAt || pool.updatedAt || 0),
     };
@@ -1097,12 +1100,39 @@ function matchOutcome(home, away) {
   return "draw";
 }
 
+function requiresWinnerChoice(match) {
+  return match && !String(match.stage || "").startsWith("Group");
+}
+
+function scoreOutcomeWithWinner(match, scoreSource) {
+  const scoreOutcome = matchOutcome(scoreSource?.homeScore, scoreSource?.awayScore);
+  if (!requiresWinnerChoice(match)) return scoreOutcome;
+  const winner = normalizeWinner(scoreSource?.winner);
+  return winner || scoreOutcome;
+}
+
+function hasValidWinnerChoice(match, scoreSource) {
+  if (!requiresWinnerChoice(match)) return true;
+  const winner = normalizeWinner(scoreSource?.winner);
+  if (!winner) return false;
+  const scoreOutcome = matchOutcome(scoreSource?.homeScore, scoreSource?.awayScore);
+  return scoreOutcome === "draw" || scoreOutcome === winner;
+}
+
+function hasCompleteMatchResult(match) {
+  return hasCompleteScore(match) && hasValidWinnerChoice(match, match);
+}
+
 function isFilled(value) {
   return value !== "" && value !== null && value !== undefined;
 }
 
 function normalizedPlayerName(name) {
   return String(name || "").trim().toLowerCase();
+}
+
+function normalizeWinner(value) {
+  return value === "home" || value === "away" ? value : "";
 }
 
 function restoredPointsForPlayer(player) {
@@ -1128,13 +1158,14 @@ function scorePick(match, pick, rules) {
   if (!pick || !isFilled(match.homeScore) || !isFilled(match.awayScore) || !isFilled(pick.homeScore) || !isFilled(pick.awayScore)) {
     return 0;
   }
+  if (!hasValidWinnerChoice(match, match) || !hasValidWinnerChoice(match, pick)) return 0;
 
   const matchRules = scoringRulesForMatch(match, rules);
+  const correctWinner = scoreOutcomeWithWinner(match, match) === scoreOutcomeWithWinner(match, pick);
+  if (!correctWinner) return 0;
+
   const exact = Number(match.homeScore) === Number(pick.homeScore) && Number(match.awayScore) === Number(pick.awayScore);
   if (exact) return Number(matchRules.exact);
-
-  const correctWinner = matchOutcome(match.homeScore, match.awayScore) === matchOutcome(pick.homeScore, pick.awayScore);
-  if (!correctWinner) return 0;
 
   const matchGoalDifference = Number(match.homeScore) - Number(match.awayScore);
   const pickGoalDifference = Number(pick.homeScore) - Number(pick.awayScore);
@@ -1145,8 +1176,8 @@ function scorePick(match, pick, rules) {
 
 function getFinalWinner(matches) {
   const final = matches.find((match) => match.stage.toLowerCase() === "final");
-  if (!final || !isFilled(final.homeScore) || !isFilled(final.awayScore)) return null;
-  const outcome = matchOutcome(final.homeScore, final.awayScore);
+  if (!final || !hasCompleteMatchResult(final)) return null;
+  const outcome = scoreOutcomeWithWinner(final, final);
   if (outcome === "home") return final.home;
   if (outcome === "away") return final.away;
   return null;
@@ -1154,7 +1185,7 @@ function getFinalWinner(matches) {
 
 function buildProgressSeries(pool) {
   const completedMatches = pool.matches
-    .filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore))
+    .filter((match) => hasCompleteMatchResult(match))
     .sort((a, b) => `${a.date}-${a.id}`.localeCompare(`${b.date}-${b.id}`));
   const finalWinner = getFinalWinner(pool.matches);
 
@@ -1297,10 +1328,10 @@ function App() {
     pool.matches.filter(isCurrentRoundMatch)
   ), [pool.matches]);
   const currentScoringRules = scoringRulesForMatch({ stage: CURRENT_ROUND_STAGE }, pool.rules);
-  const completedCurrentRoundMatches = currentRoundMatches.filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore)).length;
+  const completedCurrentRoundMatches = currentRoundMatches.filter((match) => hasCompleteMatchResult(match)).length;
   const recentResults = useMemo(() => (
     pool.matches
-      .filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore))
+      .filter((match) => hasCompleteMatchResult(match))
       .sort((a, b) => {
         const aUpdated = Number(a.resultUpdatedAt || 0);
         const bUpdated = Number(b.resultUpdatedAt || 0);
@@ -1359,10 +1390,10 @@ function App() {
       ...current,
       matches: current.matches.map((match) => {
         if (match.id !== matchId) return match;
-        if (match.resultLocked && (field === "homeScore" || field === "awayScore")) return match;
+        if (match.resultLocked && (field === "homeScore" || field === "awayScore" || field === "winner")) return match;
         const next = { ...match, [field]: value, updatedAt: Date.now() };
-        if (field === "homeScore" || field === "awayScore") {
-          next.resultUpdatedAt = isFilled(next.homeScore) && isFilled(next.awayScore) ? Date.now() : "";
+        if (field === "homeScore" || field === "awayScore" || field === "winner") {
+          next.resultUpdatedAt = hasCompleteMatchResult(next) ? Date.now() : "";
         }
         return next;
       }),
@@ -1373,7 +1404,7 @@ function App() {
     updatePool((current) => ({
       ...current,
       matches: current.matches.map((match) => (
-        match.id === matchId && isFilled(match.homeScore) && isFilled(match.awayScore)
+        match.id === matchId && hasCompleteMatchResult(match)
           ? { ...match, resultLocked: true, updatedAt: Date.now() }
           : match
       )),
@@ -1391,14 +1422,14 @@ function App() {
   function updatePick(playerId, matchId, field, value) {
     updatePool((current) => {
       const match = current.matches.find((item) => item.id === matchId);
-      if (match && isFilled(match.homeScore) && isFilled(match.awayScore)) return current;
+      if (match && hasCompleteMatchResult(match)) return current;
 
       const existing = current.picks.find((pick) => pick.playerId === playerId && pick.matchId === matchId);
       if (existing?.locked) return current;
 
       const picks = existing
         ? current.picks.map((pick) => (pick.id === existing.id ? { ...pick, [field]: value, updatedAt: Date.now() } : pick))
-        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: field === "homeScore" ? value : "", awayScore: field === "awayScore" ? value : "", locked: false, updatedAt: Date.now() }];
+        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: field === "homeScore" ? value : "", awayScore: field === "awayScore" ? value : "", winner: field === "winner" ? value : "", locked: false, updatedAt: Date.now() }];
       return { ...current, picks };
     });
   }
@@ -1406,13 +1437,13 @@ function App() {
   function lockPick(playerId, matchId) {
     updatePool((current) => ({
       ...current,
-      picks: current.matches.some((match) => match.id === matchId && isFilled(match.homeScore) && isFilled(match.awayScore))
+      picks: current.matches.some((match) => match.id === matchId && hasCompleteMatchResult(match))
         ? current.picks
         : current.picks.some((pick) => pick.playerId === playerId && pick.matchId === matchId)
         ? current.picks.map((pick) => (
-          pick.playerId === playerId && pick.matchId === matchId ? { ...pick, locked: true, updatedAt: Date.now() } : pick
+          pick.playerId === playerId && pick.matchId === matchId && hasCompleteScore(pick) && hasValidWinnerChoice(current.matches.find((match) => match.id === matchId), pick) ? { ...pick, locked: true, updatedAt: Date.now() } : pick
         ))
-        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: "", awayScore: "", locked: true, updatedAt: Date.now() }],
+        : current.picks,
     }));
   }
 
@@ -1581,8 +1612,9 @@ function App() {
               {currentRoundMatches.map((match) => {
                 const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
                 const isLocked = Boolean(pick?.locked);
-                const isClosed = isFilled(match.homeScore) && isFilled(match.awayScore);
+                const isClosed = hasCompleteMatchResult(match);
                 const isInactive = isLocked || isClosed;
+                const canLockPick = hasCompleteScore(pick) && hasValidWinnerChoice(match, pick);
                 return (
                   <article className={`pick-row ${isInactive ? "locked-pick-row" : ""}`} key={match.id}>
                     <div>
@@ -1596,13 +1628,19 @@ function App() {
                       onAway={(value) => updatePick(selectedPlayer.id, match.id, "awayScore", value)}
                       disabled={isInactive}
                     />
+                    <WinnerSelect
+                      match={match}
+                      value={pick?.winner ?? ""}
+                      onChange={(value) => updatePick(selectedPlayer.id, match.id, "winner", value)}
+                      disabled={isInactive}
+                    />
                     <strong>{scorePick(match, pick, pool.rules)} pts</strong>
                     {isLocked ? (
                       <span className="locked-badge">Locked</span>
                     ) : isClosed ? (
                       <span className="locked-badge closed-badge">Closed</span>
                     ) : (
-                      <button className="pick-lock" onClick={() => lockPick(selectedPlayer.id, match.id)}><Check size={18} /> Lock in</button>
+                      <button className="pick-lock" disabled={!canLockPick} onClick={() => lockPick(selectedPlayer.id, match.id)}><Check size={18} /> Lock in</button>
                     )}
                   </article>
                 );
@@ -1725,12 +1763,18 @@ function App() {
                     onAway={(value) => updateMatch(match.id, "awayScore", value)}
                     disabled={match.resultLocked}
                   />
+                  <WinnerSelect
+                    match={match}
+                    value={match.winner ?? ""}
+                    onChange={(value) => updateMatch(match.id, "winner", value)}
+                    disabled={match.resultLocked}
+                  />
                   {match.resultLocked ? (
                     <span className="locked-badge">Locked in</span>
                   ) : (
                     <button
                       className="pick-lock"
-                      disabled={!isFilled(match.homeScore) || !isFilled(match.awayScore)}
+                      disabled={!hasCompleteMatchResult(match)}
                       onClick={() => lockResult(match.id)}
                     >
                       <Check size={18} /> Lock in
@@ -1779,13 +1823,13 @@ function CalendarMonth({ month, matches }) {
             <div className="calendar-day blank" key={cell.key}></div>
           ) : (
             <article
-              className={`calendar-day ${cell.matches.length ? "has-match" : ""} ${cell.matches.length && cell.matches.every((match) => isFilled(match.homeScore) && isFilled(match.awayScore)) ? "day-complete" : ""} ${month.year === 2026 && month.month === 5 && cell.day === 26 ? "group-deadline" : ""}`}
+              className={`calendar-day ${cell.matches.length ? "has-match" : ""} ${cell.matches.length && cell.matches.every((match) => hasCompleteMatchResult(match)) ? "day-complete" : ""} ${month.year === 2026 && month.month === 5 && cell.day === 26 ? "group-deadline" : ""}`}
               data-deadline="All Group stage bets due!!!"
               key={cell.key}
             >
               <strong>{cell.day}</strong>
               {cell.matches.map((match) => {
-                const hasScore = isFilled(match.homeScore) && isFilled(match.awayScore);
+                const hasScore = hasCompleteMatchResult(match);
                 return (
                   <span className={hasScore ? "calendar-game completed" : "calendar-game"} key={match.id}>
                     <b>{match.home} vs {match.away}</b>
@@ -1864,13 +1908,16 @@ function ProgressGraph({ series, leaders }) {
 }
 
 function MatchRow({ match }) {
+  const winnerLabel = requiresWinnerChoice(match) && match.winner
+    ? ` · ${match.winner === "home" ? match.home : match.away} advances`
+    : "";
   return (
     <article className="match-row">
       <div>
         <span>{formatMatchDate(match)} · {match.stage}</span>
         <strong>{match.home} vs {match.away}</strong>
       </div>
-      <p>{isFilled(match.homeScore) && isFilled(match.awayScore) ? `${match.homeScore} - ${match.awayScore}` : "No result"}</p>
+      <p>{hasCompleteMatchResult(match) ? `${match.homeScore} - ${match.awayScore}${winnerLabel}` : "No result"}</p>
     </article>
   );
 }
@@ -1886,6 +1933,21 @@ function ScoreInputs({ home, away, onHome, onAway, disabled = false }) {
       <span>-</span>
       <input type="text" inputMode="numeric" pattern="[0-9]*" value={away} onChange={handleScoreChange(onAway)} aria-label="Away score" disabled={disabled} />
     </div>
+  );
+}
+
+function WinnerSelect({ match, value, onChange, disabled = false }) {
+  if (!requiresWinnerChoice(match)) return null;
+
+  return (
+    <label className="winner-select">
+      <span>Winner</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled}>
+        <option value="">Pick winner</option>
+        <option value="home">{match.home}</option>
+        <option value="away">{match.away}</option>
+      </select>
+    </label>
   );
 }
 

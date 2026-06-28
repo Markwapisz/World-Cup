@@ -1190,7 +1190,7 @@ main > :not(.hero) {
   align-items: center;
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(0, 1fr) auto 4rem auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(10rem, 13rem) 4rem auto;
 }
 
 .pick-row.locked-pick-row {
@@ -1207,6 +1207,12 @@ main > :not(.hero) {
 }
 
 .pick-row.locked-pick-row .score-inputs input {
+  background: rgba(210, 204, 192, 0.74);
+  border-color: rgba(174, 165, 149, 0.55);
+  color: #716b61;
+}
+
+.pick-row.locked-pick-row .winner-select select {
   background: rgba(210, 204, 192, 0.74);
   border-color: rgba(174, 165, 149, 0.55);
   color: #716b61;
@@ -1236,6 +1242,24 @@ main > :not(.hero) {
   text-align: center;
 }
 
+.winner-select {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 10rem;
+}
+
+.winner-select span {
+  color: #64645c;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.winner-select select {
+  min-height: 2.6rem;
+  width: 100%;
+}
+
 .add-row {
   display: grid;
   gap: 0.6rem;
@@ -1258,7 +1282,7 @@ main > :not(.hero) {
   align-items: center;
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(10rem, 13rem) auto;
 }
 
 .result-row span {
