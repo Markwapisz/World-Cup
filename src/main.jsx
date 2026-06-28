@@ -18,6 +18,11 @@ const MONTANA_TIME_ZONE = "America/Denver";
 const FIRST_ACTIVE_MATCH_ID = "m35";
 const CURRENT_ROUND_STAGE = "Round of 32";
 const CURRENT_ROUND_START_DATE = "2026-06-28";
+const ROUND_OF_32_RULES = {
+  exact: 20,
+  goalDifference: 14,
+  result: 10,
+};
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const CLOUD_SYNC_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
@@ -1104,6 +1109,12 @@ function restoredPointsForPlayer(player) {
   return restoredPointTotals[normalizedPlayerName(player.name)] ?? 0;
 }
 
+function scoringRulesForMatch(match, rules) {
+  return match?.stage === CURRENT_ROUND_STAGE
+    ? { ...rules, ...ROUND_OF_32_RULES }
+    : rules;
+}
+
 function normalizeScoreValue(value, shouldTreatBlankAsZero = false) {
   if (value === 0 || value === "0") return "0";
   if (value === null || value === undefined) {
@@ -1118,17 +1129,18 @@ function scorePick(match, pick, rules) {
     return 0;
   }
 
+  const matchRules = scoringRulesForMatch(match, rules);
   const exact = Number(match.homeScore) === Number(pick.homeScore) && Number(match.awayScore) === Number(pick.awayScore);
-  if (exact) return Number(rules.exact);
+  if (exact) return Number(matchRules.exact);
 
   const correctWinner = matchOutcome(match.homeScore, match.awayScore) === matchOutcome(pick.homeScore, pick.awayScore);
   if (!correctWinner) return 0;
 
   const matchGoalDifference = Number(match.homeScore) - Number(match.awayScore);
   const pickGoalDifference = Number(pick.homeScore) - Number(pick.awayScore);
-  if (matchGoalDifference === pickGoalDifference) return Number(rules.goalDifference);
+  if (matchGoalDifference === pickGoalDifference) return Number(matchRules.goalDifference);
 
-  return Number(rules.result);
+  return Number(matchRules.result);
 }
 
 function getFinalWinner(matches) {
@@ -1284,6 +1296,7 @@ function App() {
   const currentRoundMatches = useMemo(() => (
     pool.matches.filter(isCurrentRoundMatch)
   ), [pool.matches]);
+  const currentScoringRules = scoringRulesForMatch({ stage: CURRENT_ROUND_STAGE }, pool.rules);
   const completedCurrentRoundMatches = currentRoundMatches.filter((match) => isFilled(match.homeScore) && isFilled(match.awayScore)).length;
   const recentResults = useMemo(() => (
     pool.matches
@@ -1660,9 +1673,9 @@ function App() {
               </div>
             </div>
             <div className="rule-grid">
-              <RuleValue label="Winner + score" value={pool.rules.exact} note="Scores double in Round of 32" />
-              <RuleValue label="Winner + goal difference" value={pool.rules.goalDifference} note="Scores double in Round of 32" />
-              <RuleValue label="Winner" value={pool.rules.result} note="Scores double in Round of 32" />
+              <RuleValue label="Winner + score" value={currentScoringRules.exact} note="Round of 32 points" />
+              <RuleValue label="Winner + goal difference" value={currentScoringRules.goalDifference} note="Round of 32 points" />
+              <RuleValue label="Winner" value={currentScoringRules.result} note="Round of 32 points" />
               <RuleValue label="World Cup winner" value={pool.rules.champion} />
             </div>
           </div>
