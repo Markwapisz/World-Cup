@@ -1084,24 +1084,30 @@ function normalizePool(pool) {
     const hasEitherScore = isFilled(match.homeScore) || isFilled(match.awayScore);
     const homeScore = normalizeScoreValue(match.homeScore, hasEitherScore);
     const awayScore = normalizeScoreValue(match.awayScore, hasEitherScore);
+    const winner = normalizeWinner(match.winner) || (requiresWinnerChoice(match) ? inferredWinnerFromScore({ homeScore, awayScore }) : "");
     return {
       ...match,
       homeScore,
       awayScore,
-      winner: normalizeWinner(match.winner),
+      winner,
       resultUpdatedAt: match.resultUpdatedAt ?? "",
-      resultLocked: Boolean(match.resultLocked) && hasCompleteMatchResult({ ...match, homeScore, awayScore, winner: normalizeWinner(match.winner) }),
+      resultLocked: Boolean(match.resultLocked) && hasCompleteMatchResult({ ...match, homeScore, awayScore, winner }),
       updatedAt: Number(match.updatedAt || match.resultUpdatedAt || pool.updatedAt || 0),
     };
   });
   const activeMatchIds = new Set(matches.map((match) => match.id));
+  const matchesById = new Map(matches.map((match) => [match.id, match]));
   const picks = (pool.picks ?? initialState.picks).map((pick) => {
     const hasEitherScore = isFilled(pick.homeScore) || isFilled(pick.awayScore);
+    const homeScore = normalizeScoreValue(pick.homeScore, hasEitherScore);
+    const awayScore = normalizeScoreValue(pick.awayScore, hasEitherScore);
+    const match = matchesById.get(pick.matchId);
+    const winner = normalizeWinner(pick.winner) || (requiresWinnerChoice(match) ? inferredWinnerFromScore({ homeScore, awayScore }) : "");
     return {
       ...pick,
-      homeScore: normalizeScoreValue(pick.homeScore, hasEitherScore),
-      awayScore: normalizeScoreValue(pick.awayScore, hasEitherScore),
-      winner: normalizeWinner(pick.winner),
+      homeScore,
+      awayScore,
+      winner,
       locked: Boolean(pick.locked),
       updatedAt: Number(pick.updatedAt || pool.updatedAt || 0),
     };
@@ -1136,8 +1142,17 @@ function matchOutcome(home, away) {
   return "draw";
 }
 
+function inferredWinnerFromScore(scoreSource) {
+  const outcome = matchOutcome(scoreSource?.homeScore, scoreSource?.awayScore);
+  return outcome === "home" || outcome === "away" ? outcome : "";
+}
+
 function requiresWinnerChoice(match) {
   return match && !String(match.stage || "").startsWith("Group");
+}
+
+function isMissingWinnerRepair(match, scoreSource) {
+  return requiresWinnerChoice(match) && hasCompleteScore(scoreSource) && !normalizeWinner(scoreSource?.winner);
 }
 
 function scoreOutcomeWithWinner(match, scoreSource) {
@@ -1426,7 +1441,8 @@ function App() {
       ...current,
       matches: current.matches.map((match) => {
         if (match.id !== matchId) return match;
-        if (match.resultLocked && (field === "homeScore" || field === "awayScore" || field === "winner")) return match;
+        const canRepairLockedWinner = field === "winner" && isMissingWinnerRepair(match, match) && normalizeWinner(value);
+        if (match.resultLocked && (field === "homeScore" || field === "awayScore" || field === "winner") && !canRepairLockedWinner) return match;
         const next = { ...match, [field]: value, updatedAt: Date.now() };
         if (field === "homeScore" || field === "awayScore" || field === "winner") {
           next.resultUpdatedAt = hasCompleteMatchResult(next) ? Date.now() : "";
@@ -1458,10 +1474,11 @@ function App() {
   function updatePick(playerId, matchId, field, value) {
     updatePool((current) => {
       const match = current.matches.find((item) => item.id === matchId);
-      if (match && hasCompleteMatchResult(match)) return current;
 
       const existing = current.picks.find((pick) => pick.playerId === playerId && pick.matchId === matchId);
-      if (existing?.locked) return current;
+      const canRepairLockedWinner = field === "winner" && existing?.locked && isMissingWinnerRepair(match, existing) && normalizeWinner(value);
+      if (match && hasCompleteMatchResult(match) && !canRepairLockedWinner) return current;
+      if (existing?.locked && !canRepairLockedWinner) return current;
 
       const picks = existing
         ? current.picks.map((pick) => (pick.id === existing.id ? { ...pick, [field]: value, updatedAt: Date.now() } : pick))
@@ -1650,6 +1667,7 @@ function App() {
                 const isLocked = Boolean(pick?.locked);
                 const isClosed = hasCompleteMatchResult(match);
                 const isInactive = isLocked || isClosed;
+                const canRepairWinner = isMissingWinnerRepair(match, pick);
                 const canLockPick = hasCompleteScore(pick) && hasValidWinnerChoice(match, pick);
                 return (
                   <article className={`pick-row ${isInactive ? "locked-pick-row" : ""}`} key={match.id}>
@@ -1668,7 +1686,7 @@ function App() {
                       match={match}
                       value={pick?.winner ?? ""}
                       onChange={(value) => updatePick(selectedPlayer.id, match.id, "winner", value)}
-                      disabled={isInactive}
+                      disabled={isInactive && !canRepairWinner}
                     />
                     <strong>{scorePick(match, pick, pool.rules)} pts</strong>
                     {isLocked ? (
@@ -1786,38 +1804,41 @@ function App() {
               <span>{completedCurrentRoundMatches}/{currentRoundMatches.length} scored</span>
             </div>
             <div className="results-list">
-              {currentRoundMatches.map((match) => (
-                <article className="result-row" key={match.id}>
-                  <div>
-                    <span>{formatMatchDate(match)} · {match.stage}</span>
-                    <h4>{match.home} vs {match.away}</h4>
-                  </div>
-                  <ScoreInputs
-                    home={match.homeScore}
-                    away={match.awayScore}
-                    onHome={(value) => updateMatch(match.id, "homeScore", value)}
-                    onAway={(value) => updateMatch(match.id, "awayScore", value)}
-                    disabled={match.resultLocked}
-                  />
-                  <WinnerSelect
-                    match={match}
-                    value={match.winner ?? ""}
-                    onChange={(value) => updateMatch(match.id, "winner", value)}
-                    disabled={match.resultLocked}
-                  />
-                  {match.resultLocked ? (
-                    <span className="locked-badge">Locked in</span>
-                  ) : (
-                    <button
-                      className="pick-lock"
-                      disabled={!hasCompleteMatchResult(match)}
-                      onClick={() => lockResult(match.id)}
-                    >
-                      <Check size={18} /> Lock in
-                    </button>
-                  )}
-                </article>
-              ))}
+              {currentRoundMatches.map((match) => {
+                const canRepairWinner = isMissingWinnerRepair(match, match);
+                return (
+                  <article className="result-row" key={match.id}>
+                    <div>
+                      <span>{formatMatchDate(match)} · {match.stage}</span>
+                      <h4>{match.home} vs {match.away}</h4>
+                    </div>
+                    <ScoreInputs
+                      home={match.homeScore}
+                      away={match.awayScore}
+                      onHome={(value) => updateMatch(match.id, "homeScore", value)}
+                      onAway={(value) => updateMatch(match.id, "awayScore", value)}
+                      disabled={match.resultLocked}
+                    />
+                    <WinnerSelect
+                      match={match}
+                      value={match.winner ?? ""}
+                      onChange={(value) => updateMatch(match.id, "winner", value)}
+                      disabled={match.resultLocked && !canRepairWinner}
+                    />
+                    {match.resultLocked ? (
+                      <span className="locked-badge">Locked in</span>
+                    ) : (
+                      <button
+                        className="pick-lock"
+                        disabled={!hasCompleteMatchResult(match)}
+                        onClick={() => lockResult(match.id)}
+                      >
+                        <Check size={18} /> Lock in
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
               {currentRoundMatches.length === 0 && (
                 <p className="empty-state">No current games to score yet.</p>
               )}
