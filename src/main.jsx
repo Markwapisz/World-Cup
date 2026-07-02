@@ -718,12 +718,26 @@ async function replaceVisibleTable(tableName, rows) {
   if (!response.ok) throw new Error(`Could not sync ${tableName}`);
 }
 
+async function replaceVisibleTableWithFallback(tableName, rows, fallbackRows) {
+  try {
+    await replaceVisibleTable(tableName, rows);
+  } catch (error) {
+    if (!fallbackRows) throw error;
+    await replaceVisibleTable(tableName, fallbackRows);
+  }
+}
+
 async function loadVisibleTable(tableName, selectColumns) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${tableName}?pool_id=eq.${CLOUD_ROW_ID}&select=${selectColumns}`, {
     headers: supabaseHeaders(),
   });
-  if (!response.ok) return [];
+  if (!response.ok) throw new Error(`Could not load ${tableName}`);
   return response.json();
+}
+
+function stripWinnerColumn(row) {
+  const { winner, ...rest } = row;
+  return rest;
 }
 
 function visibleScoreValue(value) {
@@ -786,11 +800,12 @@ function applyVisibleTableEdits(pool, resultRows, pickRows) {
   const matches = normalized.matches.map((match) => {
     const row = resultRowsByMatchId.get(match.id);
     const { homeScore, awayScore } = row ? visibleScoresForMatch(row, match) : { homeScore: "", awayScore: "" };
+    const winner = normalizeWinner(row?.winner) || match.winner;
     if (!row || !isFilled(homeScore) || !isFilled(awayScore)) return match;
     const rowTimestamp = visibleRowTimestamp(row);
     const matchTimestamp = itemUpdatedAt(match);
     if (hasAnyScore(match) && (!rowTimestamp || rowTimestamp < matchTimestamp)) return match;
-    if (match.homeScore === homeScore && match.awayScore === awayScore && Boolean(match.resultLocked) === Boolean(row.result_locked)) {
+    if (match.homeScore === homeScore && match.awayScore === awayScore && match.winner === winner && Boolean(match.resultLocked) === Boolean(row.result_locked)) {
       return match;
     }
 
@@ -799,6 +814,7 @@ function applyVisibleTableEdits(pool, resultRows, pickRows) {
       ...match,
       homeScore,
       awayScore,
+      winner,
       resultLocked: Boolean(row.result_locked || match.resultLocked),
       resultUpdatedAt: updatedAt,
       updatedAt,
@@ -820,6 +836,7 @@ function applyVisibleTableEdits(pool, resultRows, pickRows) {
       existingPick
       && existingPick.homeScore === homeScore
       && existingPick.awayScore === awayScore
+      && existingPick.winner === (normalizeWinner(row.winner) || existingPick.winner)
       && Boolean(existingPick.locked) === Boolean(row.locked)
     ) {
       return;
@@ -829,6 +846,7 @@ function applyVisibleTableEdits(pool, resultRows, pickRows) {
       ...(existingPick || { id: uid("pick"), playerId: player.id, matchId: match.id }),
       homeScore,
       awayScore,
+      winner: normalizeWinner(row.winner) || existingPick?.winner || "",
       locked: Boolean(row.locked || existingPick?.locked),
       updatedAt: rowTimestamp || Date.now(),
     });
@@ -844,8 +862,10 @@ function applyVisibleTableEdits(pool, resultRows, pickRows) {
 
 async function loadPoolWithVisibleTableEdits(pool) {
   const [resultRows, pickRows] = await Promise.all([
-    loadVisibleTable("match_results", "match_id,match_date,home_team,away_team,home_score,away_score,result_locked,result_updated_at,updated_at"),
-    loadVisibleTable("player_picks", "player_id,player_name,match_id,match_date,home_team,away_team,home_score,away_score,locked,updated_at"),
+    loadVisibleTable("match_results", "match_id,match_date,home_team,away_team,home_score,away_score,winner,result_locked,result_updated_at,updated_at")
+      .catch(() => loadVisibleTable("match_results", "match_id,match_date,home_team,away_team,home_score,away_score,result_locked,result_updated_at,updated_at")),
+    loadVisibleTable("player_picks", "player_id,player_name,match_id,match_date,home_team,away_team,home_score,away_score,winner,locked,updated_at")
+      .catch(() => loadVisibleTable("player_picks", "player_id,player_name,match_id,match_date,home_team,away_team,home_score,away_score,locked,updated_at")),
   ]);
   return applyVisibleTableEdits(pool, resultRows, pickRows);
 }
@@ -874,6 +894,7 @@ async function syncVisibleSupabaseTables(pool) {
     away_team: match.away,
     home_score: blankToNull(match.homeScore),
     away_score: blankToNull(match.awayScore),
+    winner: match.winner || null,
     result_locked: Boolean(match.resultLocked),
     result_updated_at: toSupabaseTime(match.resultUpdatedAt),
     updated_at: toSupabaseTime(match.updatedAt || match.resultUpdatedAt || normalized.updatedAt),
@@ -893,14 +914,15 @@ async function syncVisibleSupabaseTables(pool) {
       away_team: match?.away || null,
       home_score: blankToNull(pick.homeScore),
       away_score: blankToNull(pick.awayScore),
+      winner: pick.winner || null,
       locked: Boolean(pick.locked),
       updated_at: toSupabaseTime(pick.updatedAt || normalized.updatedAt),
     };
   });
 
   await replaceVisibleTable("pool_players", playerRows);
-  await replaceVisibleTable("match_results", resultRows);
-  await replaceVisibleTable("player_picks", pickRows);
+  await replaceVisibleTableWithFallback("match_results", resultRows, resultRows.map(stripWinnerColumn));
+  await replaceVisibleTableWithFallback("player_picks", pickRows, pickRows.map(stripWinnerColumn));
 }
 
 function poolUpdatedAt(pool) {
@@ -976,8 +998,10 @@ function mergePicks(firstPicks, secondPicks) {
     const key = `${pick.playerId}-${pick.matchId}`;
     const current = merged.get(key);
     const next = protectedNewestItem(current, pick);
+    const winner = normalizeWinner(next.winner) || normalizeWinner(current?.winner) || normalizeWinner(pick.winner);
     merged.set(key, {
       ...next,
+      winner,
       locked: Boolean(current?.locked || pick.locked || next.locked),
     });
   });
@@ -989,9 +1013,11 @@ function mergeMatches(firstMatches, secondMatches) {
   [...firstMatches, ...secondMatches].forEach((match) => {
     const current = merged.get(match.id);
     const next = protectedNewestItem(current, match);
-    const hasScore = hasCompleteMatchResult(next);
+    const winner = normalizeWinner(next.winner) || normalizeWinner(current?.winner) || normalizeWinner(match.winner);
+    const nextWithWinner = { ...next, winner };
+    const hasScore = hasCompleteMatchResult(nextWithWinner);
     merged.set(match.id, {
-      ...next,
+      ...nextWithWinner,
       resultLocked: hasScore && Boolean(current?.resultLocked || match.resultLocked || next.resultLocked),
     });
   });

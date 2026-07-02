@@ -48,6 +48,7 @@ create table if not exists public.match_results (
   away_team text,
   home_score text,
   away_score text,
+  winner text,
   result_locked boolean not null default false,
   result_updated_at timestamptz,
   updated_at timestamptz,
@@ -65,10 +66,14 @@ create table if not exists public.player_picks (
   away_team text,
   home_score text,
   away_score text,
+  winner text,
   locked boolean not null default false,
   updated_at timestamptz,
   primary key (pool_id, player_id, match_id)
 );
+
+alter table public.match_results add column if not exists winner text;
+alter table public.player_picks add column if not exists winner text;
 
 alter table public.pool_players enable row level security;
 alter table public.match_results enable row level security;
