@@ -1285,12 +1285,22 @@ main > :not(.hero) {
   grid-template-columns: minmax(0, 1fr) auto minmax(10rem, 13rem) auto;
 }
 
+.repair-row {
+  grid-template-columns: minmax(0, 1fr) minmax(10rem, 13rem) auto;
+}
+
 .result-row span {
   color: #64645c;
 }
 
 .result-row h4 {
   margin: 0.15rem 0 0;
+}
+
+.repair-row p {
+  color: var(--warm-highlight-dark);
+  font-weight: 900;
+  margin: 0.25rem 0 0;
 }
 
 .calendar-legend {

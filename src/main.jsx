@@ -1380,6 +1380,15 @@ function App() {
   ), [pool.matches]);
   const currentScoringRules = scoringRulesForMatch({ stage: CURRENT_ROUND_STAGE }, pool.rules);
   const completedCurrentRoundMatches = currentRoundMatches.filter((match) => hasCompleteMatchResult(match)).length;
+  const missingTieWinnerRepairs = useMemo(() => (
+    pool.picks.flatMap((pick) => {
+      const match = currentRoundMatches.find((item) => item.id === pick.matchId);
+      const player = pool.players.find((item) => item.id === pick.playerId);
+      if (!match || !player || !pick.locked || !isMissingWinnerRepair(match, pick)) return [];
+      if (matchOutcome(pick.homeScore, pick.awayScore) !== "draw") return [];
+      return [{ pick, match, player }];
+    })
+  ), [currentRoundMatches, pool.picks, pool.players]);
   const recentResults = useMemo(() => (
     pool.matches
       .filter((match) => hasCompleteMatchResult(match))
@@ -1793,6 +1802,36 @@ function App() {
                 : "No local backups saved yet."}
             </p>
             <p className="recovery-status">{saveStatus}</p>
+          </div>
+
+          <div className="panel tie-repair-panel">
+            <div className="section-title">
+              <div>
+                <h3>Tie Winner Repairs</h3>
+                <p>Locked tie picks missing a winner show up here.</p>
+              </div>
+              <span>{missingTieWinnerRepairs.length} found</span>
+            </div>
+            <div className="results-list">
+              {missingTieWinnerRepairs.map(({ pick, match, player }) => (
+                <article className="result-row repair-row" key={pick.id}>
+                  <div>
+                    <span>{player.name} · {formatMatchDate(match)}</span>
+                    <h4>{match.home} vs {match.away}</h4>
+                    <p>{pick.homeScore} - {pick.awayScore}</p>
+                  </div>
+                  <WinnerSelect
+                    match={match}
+                    value={pick.winner ?? ""}
+                    onChange={(value) => updatePick(player.id, match.id, "winner", value)}
+                  />
+                  <span className="locked-badge">Needs winner</span>
+                </article>
+              ))}
+              {missingTieWinnerRepairs.length === 0 && (
+                <p className="empty-state">No locked tie bets are missing a winner.</p>
+              )}
+            </div>
           </div>
 
           <div className="panel">
