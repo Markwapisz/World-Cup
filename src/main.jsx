@@ -12,13 +12,13 @@ import "./styles.css";
 const STORAGE_KEY = "family-world-cup-pool-v1";
 const LOCAL_BACKUPS_KEY = "family-world-cup-pool-local-backups-v1";
 const MAX_LOCAL_BACKUPS = 30;
-const SCHEDULE_VERSION = "fifa-2026-round-of-32-montana-time-112";
+const SCHEDULE_VERSION = "fifa-2026-round-of-16-teams-113";
 const CLOUD_ROW_ID = "main";
 const MONTANA_TIME_ZONE = "America/Denver";
 const FIRST_ACTIVE_MATCH_ID = "m35";
-const CURRENT_ROUND_STAGE = "Round of 32";
-const CURRENT_ROUND_START_DATE = "2026-06-28";
-const ROUND_OF_32_RULES = {
+const CURRENT_ROUND_STAGE = "Round of 16";
+const CURRENT_ROUND_START_DATE = "2026-07-04";
+const KNOCKOUT_RULES = {
   exact: 50,
   goalDifference: 30,
   result: 20,
@@ -27,7 +27,6 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const CLOUD_SYNC_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 const removedMatchStages = new Set([
-  "Round of 16",
   "Quarterfinal",
   "Semifinal",
   "Third-place match",
@@ -174,14 +173,14 @@ const seedMatches = [
   { id: "m86", date: "2026-07-03", stage: "Round of 32", home: "Argentina", away: "Cabo Verde", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "4:00 PM" },
   { id: "m87", date: "2026-07-03", stage: "Round of 32", home: "Colombia", away: "Ghana", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "7:30 PM" },
   { id: "m88", date: "2026-07-03", stage: "Round of 32", home: "Australia", away: "Egypt", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "12:00 PM" },
-  { id: "m89", date: "2026-07-04", stage: "Round of 16", home: "Match 74 Winner", away: "Match 77 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m90", date: "2026-07-04", stage: "Round of 16", home: "Match 73 Winner", away: "Match 75 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m91", date: "2026-07-05", stage: "Round of 16", home: "Match 76 Winner", away: "Match 78 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m92", date: "2026-07-06", stage: "Round of 16", home: "Match 79 Winner", away: "Match 80 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m93", date: "2026-07-06", stage: "Round of 16", home: "Match 83 Winner", away: "Match 84 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m94", date: "2026-07-07", stage: "Round of 16", home: "Match 81 Winner", away: "Match 82 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m95", date: "2026-07-07", stage: "Round of 16", home: "Match 86 Winner", away: "Match 88 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m96", date: "2026-07-07", stage: "Round of 16", home: "Match 85 Winner", away: "Match 87 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m89", date: "2026-07-04", stage: "Round of 16", home: "Paraguay", away: "France", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m90", date: "2026-07-04", stage: "Round of 16", home: "Canada", away: "Morocco", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "11:00 AM" },
+  { id: "m91", date: "2026-07-05", stage: "Round of 16", home: "Brazil", away: "Norway", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m92", date: "2026-07-06", stage: "Round of 16", home: "Mexico", away: "England", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "6:00 PM" },
+  { id: "m93", date: "2026-07-06", stage: "Round of 16", home: "Portugal", away: "Spain", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m94", date: "2026-07-07", stage: "Round of 16", home: "United States", away: "Belgium", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m95", date: "2026-07-07", stage: "Round of 16", home: "Argentina", away: "Egypt", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m96", date: "2026-07-07", stage: "Round of 16", home: "Switzerland", away: "Colombia", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m97", date: "2026-07-09", stage: "Quarterfinal", home: "Match 89 Winner", away: "Match 90 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m98", date: "2026-07-10", stage: "Quarterfinal", home: "Match 93 Winner", away: "Match 94 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m99", date: "2026-07-11", stage: "Quarterfinal", home: "Match 91 Winner", away: "Match 92 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
@@ -1191,8 +1190,8 @@ function restoredPointsForPlayer(player) {
 }
 
 function scoringRulesForMatch(match, rules) {
-  return match?.stage === CURRENT_ROUND_STAGE
-    ? { ...rules, ...ROUND_OF_32_RULES }
+  return requiresWinnerChoice(match)
+    ? { ...rules, ...KNOCKOUT_RULES }
     : rules;
 }
 
