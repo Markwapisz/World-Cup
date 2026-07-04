@@ -18,10 +18,15 @@ const MONTANA_TIME_ZONE = "America/Denver";
 const FIRST_ACTIVE_MATCH_ID = "m35";
 const CURRENT_ROUND_STAGE = "Round of 16";
 const CURRENT_ROUND_START_DATE = "2026-07-04";
-const KNOCKOUT_RULES = {
+const ROUND_OF_32_RULES = {
   exact: 50,
   goalDifference: 30,
   result: 20,
+};
+const ROUND_OF_16_RULES = {
+  exact: 60,
+  goalDifference: 40,
+  result: 30,
 };
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -1190,9 +1195,9 @@ function restoredPointsForPlayer(player) {
 }
 
 function scoringRulesForMatch(match, rules) {
-  return requiresWinnerChoice(match)
-    ? { ...rules, ...KNOCKOUT_RULES }
-    : rules;
+  if (match?.stage === "Round of 16") return { ...rules, ...ROUND_OF_16_RULES };
+  if (match?.stage === "Round of 32") return { ...rules, ...ROUND_OF_32_RULES };
+  return rules;
 }
 
 function normalizeScoreValue(value, shouldTreatBlankAsZero = false) {
@@ -1773,9 +1778,9 @@ function App() {
               </div>
             </div>
             <div className="rule-grid">
-              <RuleValue label="Winner + score" value={currentScoringRules.exact} note="Round of 32 points" />
-              <RuleValue label="Winner + goal difference" value={currentScoringRules.goalDifference} note="Round of 32 points" />
-              <RuleValue label="Winner" value={currentScoringRules.result} note="Round of 32 points" />
+              <RuleValue label="Winner + score" value={currentScoringRules.exact} note="Round of 16 points" />
+              <RuleValue label="Winner + goal difference" value={currentScoringRules.goalDifference} note="Round of 16 points" />
+              <RuleValue label="Winner" value={currentScoringRules.result} note="Round of 16 points" />
               <RuleValue label="World Cup winner" value={pool.rules.champion} />
             </div>
           </div>
