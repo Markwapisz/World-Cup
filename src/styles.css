@@ -1026,6 +1026,26 @@ main > :not(.hero) {
   white-space: nowrap;
 }
 
+.match-row-score {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.cheater-tag {
+  background: rgba(178, 31, 45, 0.12);
+  border: 1px solid rgba(178, 31, 45, 0.55);
+  border-radius: 999px;
+  color: #b21f2d;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0.28rem 0.48rem;
+  text-transform: uppercase;
+}
+
 .match-row strong {
   display: block;
   margin-top: 0.15rem;
