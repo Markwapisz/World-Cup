@@ -29,9 +29,9 @@ const ROUND_OF_16_RULES = {
   result: 30,
 };
 const QUARTERFINAL_RULES = {
-  exact: 70,
-  goalDifference: 50,
-  result: 40,
+  exact: 80,
+  goalDifference: 60,
+  result: 50,
 };
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
