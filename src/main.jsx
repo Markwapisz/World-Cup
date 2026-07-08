@@ -1006,11 +1006,13 @@ function mergePicks(firstPicks, secondPicks) {
     const key = `${pick.playerId}-${pick.matchId}`;
     const current = merged.get(key);
     const next = protectedNewestItem(current, pick);
-    const winner = normalizeWinner(next.winner) || normalizeWinner(current?.winner) || normalizeWinner(pick.winner);
+    const isCleared = Boolean(next.cleared);
+    const winner = isCleared ? "" : normalizeWinner(next.winner) || normalizeWinner(current?.winner) || normalizeWinner(pick.winner);
     merged.set(key, {
       ...next,
+      cleared: isCleared,
       winner,
-      locked: Boolean(current?.locked || pick.locked || next.locked),
+      locked: isCleared ? false : Boolean(current?.locked || pick.locked || next.locked),
     });
   });
   return [...merged.values()];
@@ -1116,6 +1118,7 @@ function normalizePool(pool) {
       homeScore,
       awayScore,
       winner,
+      cleared: Boolean(pick.cleared),
       locked: Boolean(pick.locked),
       updatedAt: Number(pick.updatedAt || pool.updatedAt || 0),
     };
@@ -1500,8 +1503,8 @@ function App() {
       if (existing?.locked && !canRepairLockedWinner) return current;
 
       const picks = existing
-        ? current.picks.map((pick) => (pick.id === existing.id ? { ...pick, [field]: value, updatedAt: Date.now() } : pick))
-        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: field === "homeScore" ? value : "", awayScore: field === "awayScore" ? value : "", winner: field === "winner" ? value : "", locked: false, updatedAt: Date.now() }];
+        ? current.picks.map((pick) => (pick.id === existing.id ? { ...pick, cleared: false, [field]: value, updatedAt: Date.now() } : pick))
+        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: field === "homeScore" ? value : "", awayScore: field === "awayScore" ? value : "", winner: field === "winner" ? value : "", cleared: false, locked: false, updatedAt: Date.now() }];
       return { ...current, picks };
     });
   }
@@ -1513,7 +1516,7 @@ function App() {
         ? current.picks
         : current.picks.some((pick) => pick.playerId === playerId && pick.matchId === matchId)
         ? current.picks.map((pick) => (
-          pick.playerId === playerId && pick.matchId === matchId && hasCompleteScore(pick) && hasValidWinnerChoice(current.matches.find((match) => match.id === matchId), pick) ? { ...pick, locked: true, updatedAt: Date.now() } : pick
+          pick.playerId === playerId && pick.matchId === matchId && hasCompleteScore(pick) && hasValidWinnerChoice(current.matches.find((match) => match.id === matchId), pick) ? { ...pick, cleared: false, locked: true, updatedAt: Date.now() } : pick
         ))
         : current.picks,
     }));
