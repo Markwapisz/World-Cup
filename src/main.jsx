@@ -12,12 +12,12 @@ import "./styles.css";
 const STORAGE_KEY = "family-world-cup-pool-v1";
 const LOCAL_BACKUPS_KEY = "family-world-cup-pool-local-backups-v1";
 const MAX_LOCAL_BACKUPS = 30;
-const SCHEDULE_VERSION = "fifa-2026-round-of-16-montana-time-114";
+const SCHEDULE_VERSION = "fifa-2026-quarterfinal-teams-115";
 const CLOUD_ROW_ID = "main";
 const MONTANA_TIME_ZONE = "America/Denver";
 const FIRST_ACTIVE_MATCH_ID = "m35";
-const CURRENT_ROUND_STAGE = "Round of 16";
-const CURRENT_ROUND_START_DATE = "2026-07-04";
+const CURRENT_ROUND_STAGE = "Quarterfinal";
+const CURRENT_ROUND_START_DATE = "2026-07-09";
 const ROUND_OF_32_RULES = {
   exact: 50,
   goalDifference: 30,
@@ -32,7 +32,6 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const CLOUD_SYNC_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 const removedMatchStages = new Set([
-  "Quarterfinal",
   "Semifinal",
   "Third-place match",
   "Final",
@@ -186,10 +185,10 @@ const seedMatches = [
   { id: "m94", date: "2026-07-06", stage: "Round of 16", home: "United States", away: "Belgium", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "6:00 PM" },
   { id: "m95", date: "2026-07-07", stage: "Round of 16", home: "Argentina", away: "Egypt", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "10:00 AM" },
   { id: "m96", date: "2026-07-07", stage: "Round of 16", home: "Switzerland", away: "Colombia", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "2:00 PM" },
-  { id: "m97", date: "2026-07-09", stage: "Quarterfinal", home: "Match 89 Winner", away: "Match 90 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m98", date: "2026-07-10", stage: "Quarterfinal", home: "Match 93 Winner", away: "Match 94 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m99", date: "2026-07-11", stage: "Quarterfinal", home: "Match 91 Winner", away: "Match 92 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m100", date: "2026-07-12", stage: "Quarterfinal", home: "Match 95 Winner", away: "Match 96 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m97", date: "2026-07-09", stage: "Quarterfinal", home: "France", away: "Morocco", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "2:00 PM" },
+  { id: "m98", date: "2026-07-10", stage: "Quarterfinal", home: "Spain", away: "Belgium", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "1:00 PM" },
+  { id: "m99", date: "2026-07-11", stage: "Quarterfinal", home: "Norway", away: "England", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "3:00 PM" },
+  { id: "m100", date: "2026-07-11", stage: "Quarterfinal", home: "Argentina", away: "Switzerland", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "7:00 PM" },
   { id: "m101", date: "2026-07-14", stage: "Semifinal", home: "Match 97 Winner", away: "Match 98 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m102", date: "2026-07-15", stage: "Semifinal", home: "Match 99 Winner", away: "Match 100 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
   { id: "m103", date: "2026-07-18", stage: "Third-place match", home: "Match 101 Loser", away: "Match 102 Loser", homeScore: "", awayScore: "", resultUpdatedAt: "" },
@@ -1387,6 +1386,7 @@ function App() {
     pool.matches.filter(isCurrentRoundMatch)
   ), [pool.matches]);
   const currentScoringRules = scoringRulesForMatch({ stage: CURRENT_ROUND_STAGE }, pool.rules);
+  const currentRoundPointsNote = `${CURRENT_ROUND_STAGE} points`;
   const completedCurrentRoundMatches = currentRoundMatches.filter((match) => hasCompleteMatchResult(match)).length;
   const missingTieWinnerRepairs = useMemo(() => (
     pool.picks.flatMap((pick) => {
@@ -1783,9 +1783,9 @@ function App() {
               </div>
             </div>
             <div className="rule-grid">
-              <RuleValue label="Winner + score" value={currentScoringRules.exact} note="Round of 16 points" />
-              <RuleValue label="Winner + goal difference" value={currentScoringRules.goalDifference} note="Round of 16 points" />
-              <RuleValue label="Winner" value={currentScoringRules.result} note="Round of 16 points" />
+              <RuleValue label="Winner + score" value={currentScoringRules.exact} note={currentRoundPointsNote} />
+              <RuleValue label="Winner + goal difference" value={currentScoringRules.goalDifference} note={currentRoundPointsNote} />
+              <RuleValue label="Winner" value={currentScoringRules.result} note={currentRoundPointsNote} />
               <RuleValue label="World Cup winner" value={pool.rules.champion} />
             </div>
           </div>
