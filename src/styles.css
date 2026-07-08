@@ -1,20 +1,23 @@
 :root {
-  color: #1e2421;
-  background: #f4f1e8;
+  color: #f7efe2;
+  background: #090b0a;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
   --hero-gold: #f7d68a;
-  --warm-highlight: #b57a22;
-  --warm-highlight-dark: #6f4d16;
-  --photo-highlight-gradient: linear-gradient(90deg, rgba(255, 255, 246, 0.98), rgba(252, 236, 191, 0.72) 52%, rgba(226, 190, 116, 0.64));
-  --sketch-brown: #6f4d16;
+  --warm-highlight: #f0c66d;
+  --warm-highlight-dark: #f7d68a;
+  --photo-highlight-gradient: linear-gradient(90deg, rgba(247, 214, 138, 0.94), rgba(181, 122, 34, 0.72) 52%, rgba(54, 35, 14, 0.84));
+  --sketch-brown: #f7d68a;
   --flower-red: var(--warm-highlight);
   --flower-blue: #3763b6;
   --flower-green: #1f8b58;
-  --soft-border: rgba(214, 208, 194, 0.72);
-  --soft-shadow: 0 1rem 2.6rem rgba(51, 43, 29, 0.08);
-  --surface: rgba(255, 253, 247, 0.82);
-  --surface-solid: #fffdf7;
+  --soft-border: rgba(247, 214, 138, 0.22);
+  --soft-shadow: 0 1rem 2.6rem rgba(0, 0, 0, 0.42);
+  --surface: rgba(13, 16, 14, 0.82);
+  --surface-solid: #121612;
+  --muted-text: #b9ad9b;
+  --card-surface: rgba(17, 20, 18, 0.9);
+  --card-surface-strong: rgba(23, 27, 24, 0.94);
   text-rendering: optimizeLegibility;
 }
 
@@ -27,18 +30,18 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 18% 8%, rgba(247, 214, 138, 0.2), transparent 22rem),
-    linear-gradient(135deg, rgba(17, 89, 70, 0.06), transparent 34rem),
-    linear-gradient(45deg, rgba(218, 48, 72, 0.055), transparent 30rem),
-    #f4f1e8;
+    radial-gradient(circle at 18% 8%, rgba(247, 214, 138, 0.16), transparent 22rem),
+    linear-gradient(135deg, rgba(17, 89, 70, 0.12), transparent 34rem),
+    linear-gradient(45deg, rgba(218, 48, 72, 0.08), transparent 30rem),
+    #090b0a;
   isolation: isolate;
   position: relative;
 }
 
 body::before {
   background:
-    linear-gradient(180deg, rgba(244, 241, 232, 0.38), rgba(244, 241, 232, 0.74)),
-    linear-gradient(90deg, rgba(247, 214, 138, 0.1), rgba(244, 241, 232, 0.52)),
+    linear-gradient(180deg, rgba(9, 11, 10, 0.54), rgba(9, 11, 10, 0.88)),
+    linear-gradient(90deg, rgba(247, 214, 138, 0.08), rgba(9, 11, 10, 0.74)),
     url("https://cdn.artphotolimited.com/images/59888232b0ba742a2efde168/1000x1000/jairzinho-psg-marseille-1975.jpg");
   background-attachment: fixed;
   background-position: center bottom;
@@ -46,7 +49,7 @@ body::before {
   content: "";
   filter: sepia(0.24) saturate(0.92) contrast(1.06);
   inset: 0;
-  opacity: 0.38;
+  opacity: 0.52;
   pointer-events: none;
   position: fixed;
   z-index: 0;
@@ -96,7 +99,7 @@ select {
   background: var(--surface-solid);
   border: 1px solid var(--soft-border);
   border-radius: 14px;
-  color: #1e2421;
+  color: #f7efe2;
   min-height: 2.55rem;
   padding: 0.55rem 0.7rem;
   width: 100%;
@@ -104,7 +107,7 @@ select {
 
 input:disabled,
 select:disabled {
-  color: #64645c;
+  color: #908777;
   cursor: not-allowed;
   opacity: 0.72;
 }
@@ -150,7 +153,7 @@ main > :not(.hero) {
 .family-card p,
 .match-row span,
 .pick-row span {
-  color: #64645c;
+  color: var(--muted-text);
   margin: 0;
 }
 
@@ -208,7 +211,7 @@ main > :not(.hero) {
 }
 
 .status {
-  color: #59625d;
+  color: var(--muted-text);
   font-size: 0.9rem;
 }
 
@@ -245,8 +248,8 @@ main > :not(.hero) {
 
 .hero::before {
   background:
-    linear-gradient(90deg, #f4f1e8 0, rgba(244, 241, 232, 0.78) 9%, rgba(244, 241, 232, 0.25) 25%, rgba(244, 241, 232, 0) 42%, rgba(244, 241, 232, 0) 58%, rgba(244, 241, 232, 0.25) 75%, rgba(244, 241, 232, 0.78) 91%, #f4f1e8 100%),
-    linear-gradient(180deg, #f4f1e8 0, rgba(244, 241, 232, 0.76) 10%, rgba(244, 241, 232, 0.22) 24%, rgba(244, 241, 232, 0) 40%, rgba(244, 241, 232, 0) 62%, rgba(244, 241, 232, 0.24) 78%, rgba(244, 241, 232, 0.82) 92%, #f4f1e8 100%);
+    linear-gradient(90deg, #090b0a 0, rgba(9, 11, 10, 0.78) 9%, rgba(9, 11, 10, 0.24) 25%, rgba(9, 11, 10, 0) 42%, rgba(9, 11, 10, 0) 58%, rgba(9, 11, 10, 0.24) 75%, rgba(9, 11, 10, 0.78) 91%, #090b0a 100%),
+    linear-gradient(180deg, #090b0a 0, rgba(9, 11, 10, 0.76) 10%, rgba(9, 11, 10, 0.22) 24%, rgba(9, 11, 10, 0) 40%, rgba(9, 11, 10, 0) 62%, rgba(9, 11, 10, 0.24) 78%, rgba(9, 11, 10, 0.82) 92%, #090b0a 100%);
   content: "";
   inset: 0;
   pointer-events: none;
@@ -265,7 +268,7 @@ main > :not(.hero) {
 
 .eyebrow {
   align-items: center;
-  color: #6f4d16;
+  color: var(--warm-highlight-dark);
   display: flex;
   gap: 0.35rem;
   margin-bottom: 0.5rem;
@@ -300,17 +303,17 @@ main > :not(.hero) {
 .tabs button {
   background: transparent;
   border: 1px solid var(--soft-border);
-  color: #24312c;
+  color: #d9cfbf;
   flex: 0 0 auto;
   gap: 0.58rem;
 }
 
 .tabs button svg {
-  background: rgba(255, 253, 247, 0.64);
-  border: 1px solid rgba(214, 208, 194, 0.66);
+  background: rgba(247, 214, 138, 0.14);
+  border: 1px solid rgba(247, 214, 138, 0.22);
   border-radius: 999px;
   box-shadow: none;
-  color: #102f2a;
+  color: var(--warm-highlight-dark);
   height: 1.75rem;
   padding: 0.32rem;
   width: 1.75rem;
@@ -789,7 +792,7 @@ main > :not(.hero) {
 
 .panel {
   background: var(--surface);
-  border: 1px solid rgba(224, 217, 203, 0.66);
+  border: 1px solid var(--soft-border);
   border-radius: 20px;
   box-shadow: var(--soft-shadow);
   padding: clamp(1rem, 2vw, 1.25rem);
@@ -812,7 +815,7 @@ main > :not(.hero) {
 }
 
 .recovery-status {
-  color: #64645c;
+  color: var(--muted-text);
   font-weight: 800;
   margin: 0.8rem 0 0;
 }
@@ -843,9 +846,9 @@ main > :not(.hero) {
 
 .chart-title span {
   align-self: flex-start;
-  background: #efe7d6;
+  background: rgba(247, 214, 138, 0.14);
   border-radius: 999px;
-  color: #102f2a;
+  color: var(--warm-highlight-dark);
   font-weight: 800;
   padding: 0.45rem 0.65rem;
   white-space: nowrap;
@@ -870,8 +873,8 @@ main > :not(.hero) {
 .family-card,
 .rule,
 .champion-row {
-  background: rgba(255, 253, 247, 0.9);
-  border: 1px solid rgba(228, 222, 208, 0.72);
+  background: var(--card-surface);
+  border: 1px solid var(--soft-border);
   border-radius: 16px;
   box-shadow: 0 0.5rem 1.35rem rgba(51, 43, 29, 0.045);
   padding: 0.8rem;
@@ -890,8 +893,8 @@ main > :not(.hero) {
 }
 
 .progress-graph svg {
-  background: rgba(255, 253, 247, 0.9);
-  border: 1px solid rgba(228, 222, 208, 0.72);
+  background: var(--card-surface);
+  border: 1px solid var(--soft-border);
   border-radius: 18px;
   display: block;
   min-height: 15rem;
@@ -899,17 +902,17 @@ main > :not(.hero) {
 }
 
 .axis {
-  stroke: #948d7c;
+  stroke: #8b8171;
   stroke-width: 1.5;
 }
 
 .grid-line {
-  stroke: #ebe3d2;
+  stroke: rgba(247, 214, 138, 0.14);
   stroke-width: 1;
 }
 
 .axis-label {
-  fill: #64645c;
+  fill: var(--muted-text);
   font-size: 0.78rem;
 }
 
@@ -1052,7 +1055,7 @@ main > :not(.hero) {
 }
 
 .empty-state {
-  color: #64645c;
+  color: var(--muted-text);
   margin: 0;
 }
 
@@ -1065,11 +1068,11 @@ main > :not(.hero) {
 
 .player-node {
   align-items: center;
-  background: rgba(255, 253, 247, 0.9);
-  border: 1px solid rgba(228, 222, 208, 0.72);
+  background: var(--card-surface);
+  border: 1px solid var(--soft-border);
   border-radius: 18px;
   box-shadow: 0 0.55rem 1.35rem rgba(51, 43, 29, 0.045);
-  color: #24312c;
+  color: #f7efe2;
   display: grid;
   gap: 0.55rem;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -1094,10 +1097,10 @@ main > :not(.hero) {
 
 .rank-badge {
   align-items: center;
-  background: #fffdf7;
-  border: 1px solid rgba(214, 208, 194, 0.72);
+  background: #151a16;
+  border: 1px solid var(--soft-border);
   border-radius: 999px;
-  color: #24312c;
+  color: #f7efe2;
   display: grid;
   font-weight: 900;
   justify-items: center;
@@ -1123,7 +1126,7 @@ main > :not(.hero) {
 
 .player-node:hover .rank-badge,
 .player-node.active .rank-badge {
-  background: rgba(255, 253, 247, 0.92);
+  background: rgba(247, 239, 226, 0.92);
   color: #102f2a;
 }
 
@@ -1165,7 +1168,7 @@ main > :not(.hero) {
 
 .picks-heading {
   align-items: center;
-  border-top: 1px solid #e0d9cb;
+  border-top: 1px solid var(--soft-border);
   display: flex;
   gap: 1rem;
   justify-content: space-between;
@@ -1180,9 +1183,9 @@ main > :not(.hero) {
 }
 
 .locked-badge {
-  background: #efe7d6;
+  background: rgba(247, 214, 138, 0.16);
   border-radius: 999px;
-  color: #102f2a;
+  color: var(--warm-highlight-dark);
   font-weight: 800;
   padding: 0.65rem 0.8rem;
   white-space: nowrap;
@@ -1194,14 +1197,14 @@ main > :not(.hero) {
 }
 
 .champion-row label {
-  color: #64645c;
+  color: var(--muted-text);
   min-width: max-content;
 }
 
 .champion-row strong {
-  background: #efe7d6;
+  background: rgba(247, 214, 138, 0.14);
   border-radius: 14px;
-  color: #102f2a;
+  color: var(--warm-highlight-dark);
   padding: 0.65rem 0.8rem;
   width: 100%;
 }
@@ -1325,7 +1328,7 @@ main > :not(.hero) {
 
 .calendar-legend {
   align-items: center;
-  color: #64645c;
+  color: var(--muted-text);
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
@@ -1353,8 +1356,8 @@ main > :not(.hero) {
 }
 
 .calendar-month {
-  background: rgba(255, 253, 247, 0.86);
-  border: 1px solid rgba(228, 222, 208, 0.72);
+  background: var(--surface);
+  border: 1px solid var(--soft-border);
   border-radius: 18px;
   box-shadow: 0 0.55rem 1.35rem rgba(51, 43, 29, 0.045);
   padding: 0.8rem;
@@ -1377,15 +1380,15 @@ main > :not(.hero) {
 }
 
 .weekdays span {
-  color: #64645c;
+  color: var(--muted-text);
   font-size: 0.8rem;
   font-weight: 800;
   text-align: center;
 }
 
 .calendar-day {
-  background: rgba(255, 253, 247, 0.92);
-  border: 1px solid rgba(228, 222, 208, 0.72);
+  background: var(--card-surface);
+  border: 1px solid var(--soft-border);
   border-radius: 14px;
   min-height: 5.4rem;
   padding: 0.45rem;
@@ -1412,9 +1415,9 @@ main > :not(.hero) {
 }
 
 .calendar-game {
-  background: #efe7d6;
+  background: rgba(247, 214, 138, 0.14);
   border-radius: 10px;
-  color: #102f2a;
+  color: #f7efe2;
   display: block;
   font-size: 0.72rem;
   font-weight: 800;
@@ -1429,7 +1432,7 @@ main > :not(.hero) {
 }
 
 .calendar-game small {
-  color: #6b6251;
+  color: var(--muted-text);
   display: block;
   font-size: 0.72rem;
   font-weight: 800;
@@ -1449,19 +1452,19 @@ main > :not(.hero) {
 }
 
 .calendar-game.completed {
-  background: rgba(255, 253, 247, 0.86);
+  background: var(--card-surface-strong);
   border: 1px solid rgba(181, 122, 34, 0.24);
 }
 
 .calendar-day.has-match {
-  background: rgba(255, 253, 247, 0.94);
-  border-color: rgba(228, 222, 208, 0.86);
+  background: var(--card-surface-strong);
+  border-color: rgba(247, 214, 138, 0.28);
 }
 
 .calendar-day.day-complete {
   background:
-    linear-gradient(135deg, rgba(255, 248, 220, 0.72), rgba(247, 214, 138, 0.22)),
-    #fff8e7;
+    linear-gradient(135deg, rgba(247, 214, 138, 0.18), rgba(181, 122, 34, 0.12)),
+    #17130b;
   border-color: rgba(181, 122, 34, 0.62);
 }
 
@@ -1481,7 +1484,7 @@ main > :not(.hero) {
 }
 
 .calendar-day.group-deadline::before {
-  background: rgba(255, 253, 247, 0.94);
+  background: #15120e;
   border: 2px solid #b51e1e;
   border-radius: 999px;
   color: #b51e1e;
@@ -1502,11 +1505,11 @@ main > :not(.hero) {
 
 .icon {
   aspect-ratio: 1;
-  background: #efe7d6;
+  background: rgba(247, 214, 138, 0.14);
   border: 0;
   border-radius: 999px;
   box-shadow: none;
-  color: #24312c;
+  color: var(--warm-highlight-dark);
   min-height: 2.6rem;
   padding: 0;
   width: 2.6rem;
@@ -1559,8 +1562,8 @@ main > :not(.hero) {
 
 .rule strong {
   background:
-    linear-gradient(90deg, rgba(255, 248, 220, 0.86), rgba(247, 214, 138, 0.46)),
-    #efe7d6;
+    linear-gradient(90deg, rgba(247, 214, 138, 0.36), rgba(181, 122, 34, 0.22)),
+    #16120b;
   border-radius: 999px;
   color: var(--warm-highlight-dark);
   min-width: 3rem;
@@ -1573,7 +1576,7 @@ main > :not(.hero) {
   border: 0;
   border-radius: 999px;
   box-shadow: none;
-  color: #102f2a;
+  color: var(--warm-highlight-dark);
   height: 1.35rem;
   padding: 0;
   stroke-width: 2.5;
@@ -1585,8 +1588,8 @@ main > :not(.hero) {
 }
 
 .danger button {
-  background: #efe7d6;
-  color: #24312c;
+  background: rgba(247, 214, 138, 0.14);
+  color: var(--warm-highlight-dark);
 }
 
 @media (max-width: 880px) {
