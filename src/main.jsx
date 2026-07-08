@@ -28,6 +28,11 @@ const ROUND_OF_16_RULES = {
   goalDifference: 40,
   result: 30,
 };
+const QUARTERFINAL_RULES = {
+  exact: 70,
+  goalDifference: 50,
+  result: 40,
+};
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const CLOUD_SYNC_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
@@ -1194,6 +1199,7 @@ function restoredPointsForPlayer(player) {
 }
 
 function scoringRulesForMatch(match, rules) {
+  if (match?.stage === "Quarterfinal") return { ...rules, ...QUARTERFINAL_RULES };
   if (match?.stage === "Round of 16") return { ...rules, ...ROUND_OF_16_RULES };
   if (match?.stage === "Round of 32") return { ...rules, ...ROUND_OF_32_RULES };
   return rules;
