@@ -1234,10 +1234,6 @@ function scorePick(match, pick, rules) {
   return Number(matchRules.result);
 }
 
-function isArgentinaMatch(match) {
-  return match?.home === "Argentina" || match?.away === "Argentina";
-}
-
 function getFinalWinner(matches) {
   const final = matches.find((match) => match.stage.toLowerCase() === "final");
   if (!final || !hasCompleteMatchResult(final)) return null;
@@ -1414,7 +1410,6 @@ function App() {
       })
       .slice(0, 5)
   ), [pool.matches]);
-  const recentArgentinaResultId = recentResults.find(isArgentinaMatch)?.id ?? "";
   const topScore = standings[0]?.points ?? 0;
   const progressSeries = useMemo(() => buildProgressSeries(pool), [pool]);
 
@@ -1630,7 +1625,7 @@ function App() {
             </div>
             <div className="match-list compact">
               {recentResults.map((match) => (
-                <MatchRow key={match.id} match={match} showCheaterTag={match.id === recentArgentinaResultId} />
+                <MatchRow key={match.id} match={match} />
               ))}
               {recentResults.length === 0 && (
                 <p className="empty-state">No results entered yet.</p>
@@ -2008,7 +2003,7 @@ function ProgressGraph({ series, leaders }) {
   );
 }
 
-function MatchRow({ match, showCheaterTag = false }) {
+function MatchRow({ match }) {
   const winnerLabel = requiresWinnerChoice(match) && match.winner
     ? ` · ${match.winner === "home" ? match.home : match.away} advances`
     : "";
@@ -2020,7 +2015,6 @@ function MatchRow({ match, showCheaterTag = false }) {
       </div>
       <div className="match-row-score">
         <p>{hasCompleteMatchResult(match) ? `${match.homeScore} - ${match.awayScore}${winnerLabel}` : "No result"}</p>
-        {showCheaterTag && <span className="cheater-tag">Cheater</span>}
       </div>
     </article>
   );
