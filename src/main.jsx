@@ -29,9 +29,9 @@ const ROUND_OF_16_RULES = {
   result: 30,
 };
 const QUARTERFINAL_RULES = {
-  exact: 80,
-  goalDifference: 60,
-  result: 50,
+  exact: 100,
+  goalDifference: 80,
+  result: 70,
 };
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -543,7 +543,7 @@ const initialState = {
     exact: 10,
     goalDifference: 7,
     result: 5,
-    champion: 100,
+    champion: 500,
   },
 };
 
@@ -1006,13 +1006,11 @@ function mergePicks(firstPicks, secondPicks) {
     const key = `${pick.playerId}-${pick.matchId}`;
     const current = merged.get(key);
     const next = protectedNewestItem(current, pick);
-    const isCleared = Boolean(next.cleared);
-    const winner = isCleared ? "" : normalizeWinner(next.winner) || normalizeWinner(current?.winner) || normalizeWinner(pick.winner);
+    const winner = normalizeWinner(next.winner) || normalizeWinner(current?.winner) || normalizeWinner(pick.winner);
     merged.set(key, {
       ...next,
-      cleared: isCleared,
       winner,
-      locked: isCleared ? false : Boolean(current?.locked || pick.locked || next.locked),
+      locked: Boolean(current?.locked || pick.locked || next.locked),
     });
   });
   return [...merged.values()];
@@ -1118,7 +1116,6 @@ function normalizePool(pool) {
       homeScore,
       awayScore,
       winner,
-      cleared: Boolean(pick.cleared),
       locked: Boolean(pick.locked),
       updatedAt: Number(pick.updatedAt || pool.updatedAt || 0),
     };
@@ -1503,8 +1500,8 @@ function App() {
       if (existing?.locked && !canRepairLockedWinner) return current;
 
       const picks = existing
-        ? current.picks.map((pick) => (pick.id === existing.id ? { ...pick, cleared: false, [field]: value, updatedAt: Date.now() } : pick))
-        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: field === "homeScore" ? value : "", awayScore: field === "awayScore" ? value : "", winner: field === "winner" ? value : "", cleared: false, locked: false, updatedAt: Date.now() }];
+        ? current.picks.map((pick) => (pick.id === existing.id ? { ...pick, [field]: value, updatedAt: Date.now() } : pick))
+        : [...current.picks, { id: uid("pick"), playerId, matchId, homeScore: field === "homeScore" ? value : "", awayScore: field === "awayScore" ? value : "", winner: field === "winner" ? value : "", locked: false, updatedAt: Date.now() }];
       return { ...current, picks };
     });
   }
@@ -1516,7 +1513,7 @@ function App() {
         ? current.picks
         : current.picks.some((pick) => pick.playerId === playerId && pick.matchId === matchId)
         ? current.picks.map((pick) => (
-          pick.playerId === playerId && pick.matchId === matchId && hasCompleteScore(pick) && hasValidWinnerChoice(current.matches.find((match) => match.id === matchId), pick) ? { ...pick, cleared: false, locked: true, updatedAt: Date.now() } : pick
+          pick.playerId === playerId && pick.matchId === matchId && hasCompleteScore(pick) && hasValidWinnerChoice(current.matches.find((match) => match.id === matchId), pick) ? { ...pick, locked: true, updatedAt: Date.now() } : pick
         ))
         : current.picks,
     }));
