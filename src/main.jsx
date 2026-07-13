@@ -34,9 +34,9 @@ const QUARTERFINAL_RULES = {
   result: 70,
 };
 const SEMIFINAL_RULES = {
-  exact: 100,
-  goalDifference: 80,
-  result: 70,
+  exact: 125,
+  goalDifference: 110,
+  result: 100,
 };
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
