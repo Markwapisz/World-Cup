@@ -544,6 +544,7 @@ const initialState = {
   picks: seedPicks,
   teams: seedTeams,
   deletedPlayerIds: [],
+  worldCupWinner: "",
   scheduleVersion: SCHEDULE_VERSION,
   updatedAt: 0,
   rules: {
@@ -601,6 +602,7 @@ function backupFingerprint(pool) {
     players: (pool.players ?? []).map((player) => [player.id, player.name, player.champion, player.championLocked]),
     matches: (pool.matches ?? []).map((match) => [match.id, match.homeScore, match.awayScore, match.winner, match.resultLocked]),
     picks: (pool.picks ?? []).map((pick) => [pick.playerId, pick.matchId, pick.homeScore, pick.awayScore, pick.winner, pick.locked]),
+    worldCupWinner: pool.worldCupWinner ?? "",
     deletedPlayerIds: pool.deletedPlayerIds ?? [],
   });
 }
@@ -1135,6 +1137,7 @@ function normalizePool(pool) {
     players,
     matches,
     picks,
+    worldCupWinner: pool.worldCupWinner ?? "",
     scheduleVersion: SCHEDULE_VERSION,
     updatedAt: legacyPoolUpdatedAt(pool),
     rules: {
@@ -1252,11 +1255,15 @@ function getFinalWinner(matches) {
   return null;
 }
 
+function getWorldCupWinner(pool) {
+  return pool.worldCupWinner || getFinalWinner(pool.matches);
+}
+
 function buildProgressSeries(pool) {
   const completedMatches = pool.matches
     .filter((match) => hasCompleteMatchResult(match))
     .sort((a, b) => `${a.date}-${a.id}`.localeCompare(`${b.date}-${b.id}`));
-  const finalWinner = getFinalWinner(pool.matches);
+  const worldCupWinner = getWorldCupWinner(pool);
 
   return pool.players.map((player, playerIndex) => {
     let total = restoredPointsForPlayer(player);
@@ -1266,15 +1273,19 @@ function buildProgressSeries(pool) {
       const pick = pool.picks.find((item) => item.playerId === player.id && item.matchId === match.id);
       total += scorePick(match, pick, pool.rules);
 
-      if (match.stage.toLowerCase() === "final" && finalWinner && player.champion === finalWinner) {
-        total += Number(pool.rules.champion);
-      }
-
       points.push({
         label: `${match.home} vs ${match.away}`,
         value: total,
       });
     });
+
+    if (worldCupWinner && player.champion === worldCupWinner) {
+      total += Number(pool.rules.champion);
+      points.push({
+        label: "World Cup winner",
+        value: total,
+      });
+    }
 
     return {
       id: player.id,
@@ -1379,14 +1390,14 @@ function App() {
   const selectedPlayer = pool.players.find((player) => player.id === selectedPlayerId) ?? pool.players[0];
 
   const standings = useMemo(() => {
-    const finalWinner = getFinalWinner(pool.matches);
+    const worldCupWinner = getWorldCupWinner(pool);
     return pool.players
       .map((player) => {
         const matchPoints = pool.matches.reduce((total, match) => {
           const pick = pool.picks.find((item) => item.playerId === player.id && item.matchId === match.id);
           return total + scorePick(match, pick, pool.rules);
         }, 0);
-        const championPoints = finalWinner && player.champion === finalWinner ? Number(pool.rules.champion) : 0;
+        const championPoints = worldCupWinner && player.champion === worldCupWinner ? Number(pool.rules.champion) : 0;
         const restoredPoints = restoredPointsForPlayer(player);
         return { ...player, points: restoredPoints + matchPoints + championPoints, restoredPoints, matchPoints, championPoints };
       })
@@ -1537,6 +1548,13 @@ function App() {
           ? { ...player, champion, championLocked: true, updatedAt: Date.now() }
           : player
       )),
+    }));
+  }
+
+  function updateWorldCupWinner(winner) {
+    updatePool((current) => ({
+      ...current,
+      worldCupWinner: winner,
     }));
   }
 
@@ -1797,6 +1815,18 @@ function App() {
               <RuleValue label="Winner + goal difference" value={currentScoringRules.goalDifference} note={currentRoundPointsNote} />
               <RuleValue label="Winner" value={currentScoringRules.result} note={currentRoundPointsNote} />
               <RuleValue label="World Cup winner" value={pool.rules.champion} />
+            </div>
+            <div className="winner-control">
+              <label htmlFor="world-cup-winner">World Cup winner</label>
+              <select
+                id="world-cup-winner"
+                value={pool.worldCupWinner ?? ""}
+                onChange={(event) => updateWorldCupWinner(event.target.value)}
+              >
+                <option value="">Not selected</option>
+                {pool.teams.map((team) => <option key={team}>{team}</option>)}
+              </select>
+              <p>{pool.worldCupWinner ? `${pool.worldCupWinner} picks get ${pool.rules.champion} points.` : "Pick the champion here after the final."}</p>
             </div>
           </div>
 

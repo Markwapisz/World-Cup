@@ -872,7 +872,8 @@ main > :not(.hero) {
 .result-row,
 .family-card,
 .rule,
-.champion-row {
+.champion-row,
+.winner-control {
   background: var(--card-surface);
   border: 1px solid var(--soft-border);
   border-radius: 16px;
@@ -1571,6 +1572,26 @@ main > :not(.hero) {
   width: 1.35rem;
 }
 
+.winner-control {
+  align-items: center;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 18rem);
+  margin-top: 0.75rem;
+}
+
+.winner-control label {
+  color: var(--muted-text);
+  font-weight: 900;
+}
+
+.winner-control p {
+  color: var(--muted-text);
+  font-weight: 800;
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .danger {
   background: var(--surface);
 }
@@ -1592,6 +1613,7 @@ main > :not(.hero) {
   .player-nodes,
   .family-grid,
   .rule-grid,
+  .winner-control,
   .leader-callout {
     grid-template-columns: 1fr;
   }
