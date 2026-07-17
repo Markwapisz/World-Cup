@@ -284,6 +284,10 @@ function isCurrentRoundMatch(match) {
   return CURRENT_ROUND_STAGES.has(match?.stage) && String(match?.date || "") >= CURRENT_ROUND_START_DATE;
 }
 
+function isThirdPlaceMatch(match) {
+  return match?.stage === "Third-place match";
+}
+
 function montanaDateKey(dateKey) {
   if (!dateKey) return "";
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -1726,6 +1730,7 @@ function App() {
                     <div>
                       <span>{formatMatchDate(match)} · {match.stage}</span>
                       <h4>{match.home} vs {match.away}</h4>
+                      {isThirdPlaceMatch(match) && <span className="points-note">Third-place scoring: 125 / 110 / 100</span>}
                     </div>
                     <ScoreInputs
                       home={pick?.homeScore ?? ""}
@@ -1905,6 +1910,7 @@ function App() {
                     <div>
                       <span>{formatMatchDate(match)} · {match.stage}</span>
                       <h4>{match.home} vs {match.away}</h4>
+                      {isThirdPlaceMatch(match) && <span className="points-note">Third-place scoring: 125 / 110 / 100</span>}
                     </div>
                     <ScoreInputs
                       home={match.homeScore}
@@ -2057,6 +2063,7 @@ function MatchRow({ match }) {
       <div>
         <span>{formatMatchDate(match)} · {match.stage}</span>
         <strong>{match.home} vs {match.away}</strong>
+        {isThirdPlaceMatch(match) && <span className="points-note">Third-place scoring: 125 / 110 / 100</span>}
       </div>
       <div className="match-row-score">
         <p>{hasCompleteMatchResult(match) ? `${match.homeScore} - ${match.awayScore}${winnerLabel}` : "No result"}</p>

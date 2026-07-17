@@ -1218,6 +1218,20 @@ main > :not(.hero) {
   color: #777166;
 }
 
+.points-note,
+.pick-row.locked-pick-row .points-note {
+  background: rgba(247, 214, 138, 0.16);
+  border: 1px solid rgba(247, 214, 138, 0.28);
+  border-radius: 999px;
+  color: var(--warm-highlight-dark);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  margin-top: 0.35rem;
+  padding: 0.28rem 0.55rem;
+  width: fit-content;
+}
+
 .pick-row.locked-pick-row .score-inputs input {
   background: rgba(210, 204, 192, 0.74);
   border-color: rgba(174, 165, 149, 0.55);
