@@ -1024,11 +1024,14 @@ function mergePicks(firstPicks, secondPicks) {
     const key = `${pick.playerId}-${pick.matchId}`;
     const current = merged.get(key);
     const next = protectedNewestItem(current, pick);
-    const winner = normalizeWinner(next.winner) || normalizeWinner(current?.winner) || normalizeWinner(pick.winner);
+    const nextHasScore = hasAnyScore(next);
+    const winner = nextHasScore
+      ? normalizeWinner(next.winner) || normalizeWinner(current?.winner) || normalizeWinner(pick.winner)
+      : "";
     merged.set(key, {
       ...next,
       winner,
-      locked: Boolean(current?.locked || pick.locked || next.locked),
+      locked: nextHasScore ? Boolean(current?.locked || pick.locked || next.locked) : Boolean(next.locked),
     });
   });
   return [...merged.values()];
