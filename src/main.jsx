@@ -39,10 +39,15 @@ const SEMIFINAL_RULES = {
   goalDifference: 110,
   result: 100,
 };
-const FINAL_ROUND_RULES = {
+const THIRD_PLACE_RULES = {
   exact: 125,
   goalDifference: 110,
   result: 100,
+};
+const FINAL_RULES = {
+  exact: 175,
+  goalDifference: 160,
+  result: 150,
 };
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -1209,7 +1214,8 @@ function restoredPointsForPlayer(player) {
 }
 
 function scoringRulesForMatch(match, rules) {
-  if (match?.stage === "Final" || match?.stage === "Third-place match") return { ...rules, ...FINAL_ROUND_RULES };
+  if (match?.stage === "Final" || match?.stage === "Final Round") return { ...rules, ...FINAL_RULES };
+  if (match?.stage === "Third-place match") return { ...rules, ...THIRD_PLACE_RULES };
   if (match?.stage === "Semifinal") return { ...rules, ...SEMIFINAL_RULES };
   if (match?.stage === "Quarterfinal") return { ...rules, ...QUARTERFINAL_RULES };
   if (match?.stage === "Round of 16") return { ...rules, ...ROUND_OF_16_RULES };
