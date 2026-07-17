@@ -11,15 +11,18 @@
   --flower-red: var(--warm-highlight);
   --flower-blue: #3763b6;
   --flower-green: #1f8b58;
-  --soft-border: rgba(247, 214, 138, 0.18);
+  --soft-border: rgba(247, 214, 138, 0.14);
   --soft-shadow: 0 1rem 2.6rem rgba(0, 0, 0, 0.34);
   --surface: rgba(18, 16, 12, 0.82);
   --surface-solid: #121612;
   --muted-text: #b9ad9b;
   --card-surface: rgba(22, 19, 14, 0.84);
   --card-surface-strong: rgba(28, 23, 15, 0.88);
-  --glass-shine: linear-gradient(145deg, rgba(255, 251, 235, 0.035), rgba(247, 214, 138, 0.018) 38%, rgba(255, 255, 255, 0.008) 72%);
-  --glass-edge: rgba(255, 244, 194, 0.045);
+  --glass-shine: linear-gradient(145deg, rgba(255, 251, 235, 0.014), rgba(247, 214, 138, 0.007) 38%, rgba(255, 255, 255, 0.004) 72%);
+  --glass-edge: rgba(255, 244, 194, 0.024);
+  --wet-sheen:
+    radial-gradient(ellipse at 18% 0%, rgba(255, 253, 247, 0.035), transparent 34%),
+    linear-gradient(118deg, transparent 0 28%, rgba(255, 253, 247, 0.018) 36%, rgba(247, 214, 138, 0.008) 46%, transparent 56%);
   text-rendering: optimizeLegibility;
 }
 
@@ -68,6 +71,7 @@ button,
 .file-button {
   align-items: center;
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     rgba(16, 47, 42, 0.86);
   border: 1px solid rgba(247, 214, 138, 0.18);
@@ -94,14 +98,20 @@ button svg,
 
 button:hover,
 .file-button:hover {
-  background: #17483f;
-  box-shadow: 0 0.55rem 1.2rem rgba(16, 47, 42, 0.13);
+  background:
+    var(--wet-sheen),
+    linear-gradient(145deg, rgba(247, 214, 138, 0.08), rgba(23, 72, 63, 0.9)),
+    #17483f;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 247, 0.05),
+    0 0.55rem 1.2rem rgba(16, 47, 42, 0.13);
   transform: translateY(-1px);
 }
 
 input,
 select {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     rgba(18, 22, 18, 0.78);
   border: 1px solid var(--soft-border);
@@ -244,7 +254,7 @@ main > :not(.hero) {
   border-radius: 28px;
   border: 1px solid rgba(247, 214, 138, 0.2);
   box-shadow:
-    inset 0 1px 0 rgba(255, 253, 247, 0.16),
+    inset 0 1px 0 rgba(255, 253, 247, 0.06),
     0 1.2rem 3.2rem rgba(0, 0, 0, 0.24);
   filter: contrast(1.12) saturate(1.12) sepia(0.16);
   color: #fff;
@@ -313,6 +323,7 @@ main > :not(.hero) {
 
 .tabs button {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     rgba(20, 18, 13, 0.42);
   backdrop-filter: blur(14px) saturate(1.18);
@@ -807,15 +818,19 @@ main > :not(.hero) {
 
 .panel {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     var(--surface);
   backdrop-filter: blur(18px) saturate(1.18);
   border: 1px solid var(--soft-border);
   border-radius: 20px;
   box-shadow:
-    inset 0 1px 0 var(--glass-edge),
+    inset 0 1px 0 rgba(255, 253, 247, 0.04),
+    inset 0 -1px 0 rgba(247, 214, 138, 0.018),
     var(--soft-shadow);
+  overflow: hidden;
   padding: clamp(1rem, 2vw, 1.25rem);
+  position: relative;
 }
 
 .dashboard-stack,
@@ -895,15 +910,19 @@ main > :not(.hero) {
 .champion-row,
 .winner-control {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     var(--card-surface);
   backdrop-filter: blur(14px) saturate(1.16);
   border: 1px solid var(--soft-border);
   border-radius: 16px;
   box-shadow:
-    inset 0 1px 0 var(--glass-edge),
+    inset 0 1px 0 rgba(255, 253, 247, 0.035),
+    inset 0 -1px 0 rgba(247, 214, 138, 0.014),
     0 0.65rem 1.6rem rgba(0, 0, 0, 0.14);
+  overflow: hidden;
   padding: 0.8rem;
+  position: relative;
 }
 
 .leader {
@@ -920,12 +939,15 @@ main > :not(.hero) {
 
 .progress-graph svg {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     var(--card-surface);
   backdrop-filter: blur(14px) saturate(1.16);
   border: 1px solid var(--soft-border);
   border-radius: 18px;
-  box-shadow: inset 0 1px 0 var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 247, 0.035),
+    inset 0 -1px 0 rgba(247, 214, 138, 0.014);
   display: block;
   min-height: 15rem;
   width: 100%;
@@ -1087,13 +1109,15 @@ main > :not(.hero) {
 .player-node {
   align-items: center;
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     var(--card-surface);
   backdrop-filter: blur(14px) saturate(1.16);
   border: 1px solid var(--soft-border);
   border-radius: 18px;
   box-shadow:
-    inset 0 1px 0 var(--glass-edge),
+    inset 0 1px 0 rgba(255, 253, 247, 0.035),
+    inset 0 -1px 0 rgba(247, 214, 138, 0.014),
     0 0.55rem 1.35rem rgba(0, 0, 0, 0.14);
   color: #f7efe2;
   display: grid;
@@ -1209,6 +1233,7 @@ main > :not(.hero) {
 
 .locked-badge {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     rgba(247, 214, 138, 0.16);
   border: 1px solid rgba(247, 214, 138, 0.22);
@@ -1231,6 +1256,7 @@ main > :not(.hero) {
 
 .champion-row strong {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     rgba(247, 214, 138, 0.14);
   border: 1px solid rgba(247, 214, 138, 0.18);
@@ -1265,6 +1291,7 @@ main > :not(.hero) {
 .points-note,
 .pick-row.locked-pick-row .points-note {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     rgba(247, 214, 138, 0.16);
   border: 1px solid rgba(247, 214, 138, 0.28);
@@ -1406,14 +1433,17 @@ main > :not(.hero) {
 
 .calendar-month {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     var(--surface);
   backdrop-filter: blur(18px) saturate(1.18);
   border: 1px solid var(--soft-border);
   border-radius: 18px;
   box-shadow:
-    inset 0 1px 0 var(--glass-edge),
+    inset 0 1px 0 rgba(255, 253, 247, 0.035),
+    inset 0 -1px 0 rgba(247, 214, 138, 0.014),
     0 0.55rem 1.35rem rgba(0, 0, 0, 0.14);
+  overflow: hidden;
   padding: 0.8rem;
 }
 
@@ -1442,6 +1472,7 @@ main > :not(.hero) {
 
 .calendar-day {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     var(--card-surface);
   backdrop-filter: blur(12px) saturate(1.12);
@@ -1473,6 +1504,7 @@ main > :not(.hero) {
 
 .calendar-game {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     rgba(247, 214, 138, 0.14);
   border: 1px solid rgba(247, 214, 138, 0.12);
@@ -1513,6 +1545,7 @@ main > :not(.hero) {
 
 .calendar-game.completed {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     var(--card-surface-strong);
   border: 1px solid rgba(181, 122, 34, 0.24);
@@ -1520,6 +1553,7 @@ main > :not(.hero) {
 
 .calendar-day.has-match {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     var(--card-surface-strong);
   border-color: rgba(247, 214, 138, 0.28);
@@ -1669,12 +1703,14 @@ main > :not(.hero) {
 
 .danger {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     var(--surface);
 }
 
 .danger button {
   background:
+    var(--wet-sheen),
     var(--glass-shine),
     rgba(247, 214, 138, 0.14);
   color: var(--warm-highlight-dark);
