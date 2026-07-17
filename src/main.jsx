@@ -12,12 +12,13 @@ import "./styles.css";
 const STORAGE_KEY = "family-world-cup-pool-v1";
 const LOCAL_BACKUPS_KEY = "family-world-cup-pool-local-backups-v1";
 const MAX_LOCAL_BACKUPS = 30;
-const SCHEDULE_VERSION = "fifa-2026-semifinal-teams-116";
+const SCHEDULE_VERSION = "fifa-2026-final-teams-117";
 const CLOUD_ROW_ID = "main";
 const MONTANA_TIME_ZONE = "America/Denver";
 const FIRST_ACTIVE_MATCH_ID = "m35";
-const CURRENT_ROUND_STAGE = "Semifinal";
-const CURRENT_ROUND_START_DATE = "2026-07-14";
+const CURRENT_ROUND_STAGE = "Final Round";
+const CURRENT_ROUND_STAGES = new Set(["Third-place match", "Final"]);
+const CURRENT_ROUND_START_DATE = "2026-07-18";
 const ROUND_OF_32_RULES = {
   exact: 50,
   goalDifference: 30,
@@ -38,13 +39,15 @@ const SEMIFINAL_RULES = {
   goalDifference: 110,
   result: 100,
 };
+const FINAL_ROUND_RULES = {
+  exact: 125,
+  goalDifference: 110,
+  result: 100,
+};
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const CLOUD_SYNC_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
-const removedMatchStages = new Set([
-  "Third-place match",
-  "Final",
-]);
+const removedMatchStages = new Set();
 
 const seedTeams = [
   "Algeria",
@@ -200,8 +203,8 @@ const seedMatches = [
   { id: "m100", date: "2026-07-11", stage: "Quarterfinal", home: "Argentina", away: "Switzerland", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "7:00 PM" },
   { id: "m101", date: "2026-07-14", stage: "Semifinal", home: "France", away: "Spain", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "1:00 PM" },
   { id: "m102", date: "2026-07-15", stage: "Semifinal", home: "England", away: "Argentina", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "1:00 PM" },
-  { id: "m103", date: "2026-07-18", stage: "Third-place match", home: "Match 101 Loser", away: "Match 102 Loser", homeScore: "", awayScore: "", resultUpdatedAt: "" },
-  { id: "m104", date: "2026-07-19", stage: "Final", home: "Match 101 Winner", away: "Match 102 Winner", homeScore: "", awayScore: "", resultUpdatedAt: "" },
+  { id: "m103", date: "2026-07-18", stage: "Third-place match", home: "France", away: "England", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "3:00 PM" },
+  { id: "m104", date: "2026-07-19", stage: "Final", home: "Spain", away: "Argentina", homeScore: "", awayScore: "", resultUpdatedAt: "", timeMt: "1:00 PM" },
 ];
 
 const seedPlayers = [
@@ -273,7 +276,7 @@ function timeMtSortValue(timeMt) {
 }
 
 function isCurrentRoundMatch(match) {
-  return match?.stage === CURRENT_ROUND_STAGE && String(match?.date || "") >= CURRENT_ROUND_START_DATE;
+  return CURRENT_ROUND_STAGES.has(match?.stage) && String(match?.date || "") >= CURRENT_ROUND_START_DATE;
 }
 
 function montanaDateKey(dateKey) {
@@ -1203,6 +1206,7 @@ function restoredPointsForPlayer(player) {
 }
 
 function scoringRulesForMatch(match, rules) {
+  if (match?.stage === "Final" || match?.stage === "Third-place match") return { ...rules, ...FINAL_ROUND_RULES };
   if (match?.stage === "Semifinal") return { ...rules, ...SEMIFINAL_RULES };
   if (match?.stage === "Quarterfinal") return { ...rules, ...QUARTERFINAL_RULES };
   if (match?.stage === "Round of 16") return { ...rules, ...ROUND_OF_16_RULES };
