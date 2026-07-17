@@ -941,13 +941,12 @@ main > :not(.hero) {
 .leader-callout {
   align-items: center;
   background:
-    linear-gradient(90deg, rgba(255, 250, 225, 0.9), rgba(250, 226, 166, 0.86)),
-    var(--hero-gold);
-  border: 1px solid rgba(159, 118, 48, 0.28);
+    linear-gradient(90deg, rgba(255, 253, 247, 0.08) 0%, rgba(255, 253, 247, 0.12) 42%, rgba(247, 214, 138, 0.54) 100%);
+  border: 1px solid rgba(159, 118, 48, 0.18);
   border-radius: 18px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 253, 247, 0.58),
-    0 0.8rem 1.8rem rgba(111, 77, 22, 0.12);
+    inset 0 1px 0 rgba(255, 253, 247, 0.24),
+    0 0.7rem 1.4rem rgba(111, 77, 22, 0.08);
   display: grid;
   gap: 0.7rem;
   grid-template-columns: minmax(0, 1fr) auto;
