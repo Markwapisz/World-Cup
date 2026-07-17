@@ -987,12 +987,12 @@ main > :not(.hero) {
 
 .leader-callout strong,
 .leader-callout em {
-  color: #6f4d16;
   font-weight: 900;
   text-shadow: none;
 }
 
 .leader-callout strong {
+  color: #d8b86a;
   font-size: clamp(1.6rem, 4vw, 2.6rem);
   line-height: 1;
   overflow: hidden;
@@ -1001,6 +1001,7 @@ main > :not(.hero) {
 }
 
 .leader-callout em {
+  color: #6f4d16;
   font-size: clamp(1.2rem, 2.5vw, 1.8rem);
   font-style: normal;
   white-space: nowrap;
