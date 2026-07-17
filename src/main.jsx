@@ -1816,18 +1816,6 @@ function App() {
               <RuleValue label="Winner" value={currentScoringRules.result} note={currentRoundPointsNote} />
               <RuleValue label="World Cup winner" value={pool.rules.champion} />
             </div>
-            <div className="winner-control">
-              <label htmlFor="world-cup-winner">World Cup winner</label>
-              <select
-                id="world-cup-winner"
-                value={pool.worldCupWinner ?? ""}
-                onChange={(event) => updateWorldCupWinner(event.target.value)}
-              >
-                <option value="">Not selected</option>
-                {pool.teams.map((team) => <option key={team}>{team}</option>)}
-              </select>
-              <p>{pool.worldCupWinner ? `${pool.worldCupWinner} picks get ${pool.rules.champion} points.` : "Pick the champion here after the final."}</p>
-            </div>
           </div>
 
           <div className="panel recovery-panel">
@@ -1890,6 +1878,18 @@ function App() {
                 <p className="danger-note">DO NOT TOUCH</p>
               </div>
               <span>{completedCurrentRoundMatches}/{currentRoundMatches.length} scored</span>
+            </div>
+            <div className="winner-control">
+              <label htmlFor="world-cup-winner">World Cup winner</label>
+              <select
+                id="world-cup-winner"
+                value={pool.worldCupWinner ?? ""}
+                onChange={(event) => updateWorldCupWinner(event.target.value)}
+              >
+                <option value="">Not selected</option>
+                {pool.teams.map((team) => <option key={team}>{team}</option>)}
+              </select>
+              <p>{pool.worldCupWinner ? `${pool.worldCupWinner} picks get ${pool.rules.champion} points.` : "Pick the champion here after the final."}</p>
             </div>
             <div className="results-list">
               {currentRoundMatches.map((match) => {
