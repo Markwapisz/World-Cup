@@ -1629,14 +1629,6 @@ function App() {
     setSaveStatus("Local backup saved");
   }
 
-  const tabs = [
-    ["dashboard", HandDrawnWorldCupIcon, "Home"],
-    ["picks", RealisticClipboardIcon, "Betting"],
-    ["matches", RealisticCalendarIcon, "Calendar"],
-    ["family", RealisticPlayerIcon, "Add Player"],
-    ["settings", RealisticRulesIcon, "Rules"],
-  ];
-
   return (
     <main>
       <section className="hero">
@@ -1645,310 +1637,34 @@ function App() {
         </div>
       </section>
 
-      <nav className="tabs" aria-label="Main views">
-        {tabs.map(([id, Icon, label]) => (
-          <button key={id} className={`${activeTab === id ? "active" : ""} tab-${id}`} onClick={() => setActiveTab(id)}>
-            <Icon size={18} /> {label}
-          </button>
-        ))}
-      </nav>
+      <section className="final-page">
+        <div className="panel final-graph-panel">
+          <ProgressGraph series={progressSeries} leaders={standings.filter((player) => player.points === topScore)} />
+        </div>
 
-      {activeTab === "dashboard" && (
-        <section className="dashboard-stack">
-          <div className="panel">
-            <ProgressGraph series={progressSeries} leaders={standings.filter((player) => player.points === topScore)} />
-          </div>
-
-          <div className="panel">
-            <div className="section-title">
-              <h3>Recent Results</h3>
-            </div>
-            <div className="match-list compact">
-              {recentResults.map((match) => (
-                <MatchRow key={match.id} match={match} />
-              ))}
-              {recentResults.length === 0 && (
-                <p className="empty-state">No results entered yet.</p>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "picks" && selectedPlayer && (
-        <section className="panel">
+        <div className="panel final-rankings-panel">
           <div className="section-title">
             <div>
-              <h3>Choose A Player</h3>
-              <p>Click a family member to open their picks.</p>
+              <h3>Final Rankings</h3>
+              <p>Everyone's final World Cup standings.</p>
             </div>
           </div>
-          <div className="player-nodes">
-            {standings.map((player, index) => {
-              return (
-                <button
-                  className={`player-node ${selectedPlayer.id === player.id ? "active" : ""}`}
-                  key={player.id}
-                  onClick={() => setSelectedPlayerId(player.id)}
-                >
-                  <span className={`rank-badge rank-${index + 1}`}>{index + 1}</span>
-                  <strong>{player.name}</strong>
-                  <em>{player.points ?? 0} pts</em>
-                </button>
-              );
-            })}
-          </div>
-          <div className="picks-heading">
-            <div>
-              <h3>{selectedPlayer.name}'s Picks</h3>
-            </div>
-          </div>
-          <div className="champion-row">
-            <label>World Cup winner pick</label>
-            {selectedPlayer.championLocked ? (
-              <strong>{selectedPlayer.champion}</strong>
-            ) : (
-              <>
-                <select
-                  value={championDrafts[selectedPlayer.id] ?? "United States"}
-                  onChange={(event) => setChampionDrafts((current) => ({ ...current, [selectedPlayer.id]: event.target.value }))}
-                >
-                  {pool.teams.map((team) => <option key={team}>{team}</option>)}
-                </select>
-                <button onClick={() => lockChampion(selectedPlayer.id)}><Check size={18} /> Lock pick</button>
-              </>
-            )}
-          </div>
-          {selectedPlayer.championLocked ? (
-            <div className="pick-table">
-              {currentRoundMatches.map((match) => {
-                const pick = pool.picks.find((item) => item.playerId === selectedPlayer.id && item.matchId === match.id);
-                const isLocked = Boolean(pick?.locked);
-                const isClosed = hasCompleteMatchResult(match);
-                const isInactive = isLocked || isClosed;
-                const canRepairWinner = isMissingWinnerRepair(match, pick);
-                const canLockPick = hasCompleteScore(pick) && hasValidWinnerChoice(match, pick);
-                return (
-                  <article className={`pick-row ${isInactive ? "locked-pick-row" : ""}`} key={match.id}>
-                    <div>
-                      <span>{formatMatchDate(match)} · {match.stage}</span>
-                      <h4>{match.home} vs {match.away}</h4>
-                      {isThirdPlaceMatch(match) && <span className="points-note">Third-place scoring: 50 / 40 / 30</span>}
-                    </div>
-                    <ScoreInputs
-                      home={pick?.homeScore ?? ""}
-                      away={pick?.awayScore ?? ""}
-                      onHome={(value) => updatePick(selectedPlayer.id, match.id, "homeScore", value)}
-                      onAway={(value) => updatePick(selectedPlayer.id, match.id, "awayScore", value)}
-                      disabled={isInactive}
-                    />
-                    <WinnerSelect
-                      match={match}
-                      value={pick?.winner ?? ""}
-                      onChange={(value) => updatePick(selectedPlayer.id, match.id, "winner", value)}
-                      disabled={isInactive && !canRepairWinner}
-                    />
-                    <strong>{scorePick(match, pick, pool.rules)} pts</strong>
-                    {isLocked ? (
-                      <span className="locked-badge">Locked</span>
-                    ) : isClosed ? (
-                      <span className="locked-badge closed-badge">Closed</span>
-                    ) : (
-                      <button className="pick-lock" disabled={!canLockPick} onClick={() => lockPick(selectedPlayer.id, match.id)}><Check size={18} /> Lock in</button>
-                    )}
-                  </article>
-                );
-              })}
-              {currentRoundMatches.length === 0 && (
-                <p className="empty-state">No current games to pick yet.</p>
-              )}
-            </div>
-          ) : (
-            <p className="empty-state champion-required">Lock in a World Cup winner before making game picks.</p>
-          )}
-        </section>
-      )}
-
-      {activeTab === "matches" && (
-        <section className="panel">
-          <div className="section-title">
-            <div>
-              <h3>World Cup Calendar</h3>
-              <p>All match dates are shown in Montana time.</p>
-            </div>
-          </div>
-          <div className="calendar-legend">
-            <span><i></i> Match day</span>
-            <span>Scores appear after results are entered</span>
-            <span><strong>Montana time</strong></span>
-          </div>
-          <div className="calendar-grid">
-            {worldCupCalendarMonths.map((month) => (
-              <CalendarMonth key={month.label} month={month} matches={currentRoundMatches} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {activeTab === "family" && (
-        <section className="panel">
-          <div className="section-title">
-            <div>
-              <h3>Players</h3>
-            </div>
-          </div>
-          <div className="add-row family-add">
-            <input value={draftPlayer.name} onChange={(event) => setDraftPlayer({ ...draftPlayer, name: event.target.value })} placeholder="Name" />
-            <button onClick={addPlayer}><Plus size={18} /> Add</button>
-          </div>
-          <div className="family-grid">
-            {pool.players.map((player) => (
-              <article className="family-card" key={player.id}>
-                <div className="avatar">{player.name.slice(0, 1).toUpperCase()}</div>
+          <div className="final-rankings">
+            {standings.map((player, index) => (
+              <article className={`final-ranking-card rank-${index + 1}`} key={player.id}>
+                <span className={`rank-badge rank-${index + 1}`}>{index + 1}</span>
                 <div>
                   <h4>{player.name}</h4>
-                  <p>{player.championLocked ? `World Cup winner pick: ${player.champion}` : "World Cup winner pick: not locked"}</p>
+                  <p>
+                    {player.champion ? `World Cup winner pick: ${player.champion}` : "No World Cup winner pick"}
+                  </p>
                 </div>
-                <button className="icon" onClick={() => removePlayer(player.id)} title="Remove player"><Trash2 size={18} /></button>
+                <strong>{player.points} pts</strong>
               </article>
             ))}
           </div>
-        </section>
-      )}
-
-      {activeTab === "settings" && (
-        <section className="settings-stack">
-          <div className="panel settings">
-            <div className="section-title">
-              <div>
-                <h3>Scoring Rules</h3>
-              </div>
-            </div>
-            <div className="rule-grid">
-              <RuleValue label="Winner + score" value={currentScoringRules.exact} note={currentRoundPointsNote} />
-              <RuleValue label="Winner + goal difference" value={currentScoringRules.goalDifference} note={currentRoundPointsNote} />
-              <RuleValue label="Winner" value={currentScoringRules.result} note={currentRoundPointsNote} />
-              <RuleValue label="World Cup winner" value={pool.rules.champion} />
-            </div>
-          </div>
-
-          <div className="panel recovery-panel">
-            <div className="section-title">
-              <div>
-                <h3>Disaster Box</h3>
-              </div>
-            </div>
-            <div className="recovery-actions">
-              <button onClick={exportPool}>Export current data</button>
-              <label className="file-button">
-                Import backup
-                <input type="file" accept="application/json" onChange={importPool} />
-              </label>
-              <button onClick={saveLocalBackupNow}>Save local backup now</button>
-              <button disabled={!localBackups.length} onClick={restoreLatestLocalBackup}>Restore latest local backup</button>
-            </div>
-            <p className="recovery-status">
-              {localBackups.length
-                ? `${localBackups.length} local backups saved. Latest: ${new Date(localBackups[0].createdAt).toLocaleString()} with ${localBackups[0].completedResults} results.`
-                : "No local backups saved yet."}
-            </p>
-            <p className="recovery-status">{saveStatus}</p>
-          </div>
-
-          <div className="panel tie-repair-panel">
-            <div className="section-title">
-              <div>
-                <h3>Tie Winner Repairs</h3>
-                <p>Locked tie picks missing a winner show up here.</p>
-              </div>
-              <span>{missingTieWinnerRepairs.length} found</span>
-            </div>
-            <div className="results-list">
-              {missingTieWinnerRepairs.map(({ pick, match, player }) => (
-                <article className="result-row repair-row" key={pick.id}>
-                  <div>
-                    <span>{player.name} · {formatMatchDate(match)}</span>
-                    <h4>{match.home} vs {match.away}</h4>
-                    <p>{pick.homeScore} - {pick.awayScore}</p>
-                  </div>
-                  <WinnerSelect
-                    match={match}
-                    value={pick.winner ?? ""}
-                    onChange={(value) => updatePick(player.id, match.id, "winner", value)}
-                  />
-                  <span className="locked-badge">Needs winner</span>
-                </article>
-              ))}
-              {missingTieWinnerRepairs.length === 0 && (
-                <p className="empty-state">No locked tie bets are missing a winner.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="section-title">
-              <div>
-                <h3>Game Results</h3>
-                <p className="danger-note">DO NOT TOUCH</p>
-              </div>
-              <span>{completedCurrentRoundMatches}/{currentRoundMatches.length} scored</span>
-            </div>
-            <div className="winner-control">
-              <label htmlFor="world-cup-winner">World Cup winner</label>
-              <select
-                id="world-cup-winner"
-                value={pool.worldCupWinner ?? ""}
-                onChange={(event) => updateWorldCupWinner(event.target.value)}
-              >
-                <option value="">Not selected</option>
-                {pool.teams.map((team) => <option key={team}>{team}</option>)}
-              </select>
-              <p>{pool.worldCupWinner ? `${pool.worldCupWinner} picks get ${pool.rules.champion} points.` : "Pick the champion here after the final."}</p>
-            </div>
-            <div className="results-list">
-              {currentRoundMatches.map((match) => {
-                const canRepairWinner = isMissingWinnerRepair(match, match);
-                return (
-                  <article className="result-row" key={match.id}>
-                    <div>
-                      <span>{formatMatchDate(match)} · {match.stage}</span>
-                      <h4>{match.home} vs {match.away}</h4>
-                      {isThirdPlaceMatch(match) && <span className="points-note">Third-place scoring: 50 / 40 / 30</span>}
-                    </div>
-                    <ScoreInputs
-                      home={match.homeScore}
-                      away={match.awayScore}
-                      onHome={(value) => updateMatch(match.id, "homeScore", value)}
-                      onAway={(value) => updateMatch(match.id, "awayScore", value)}
-                      disabled={match.resultLocked}
-                    />
-                    <WinnerSelect
-                      match={match}
-                      value={match.winner ?? ""}
-                      onChange={(value) => updateMatch(match.id, "winner", value)}
-                      disabled={match.resultLocked && !canRepairWinner}
-                    />
-                    {match.resultLocked ? (
-                      <span className="locked-badge">Locked in</span>
-                    ) : (
-                      <button
-                        className="pick-lock"
-                        disabled={!hasCompleteMatchResult(match)}
-                        onClick={() => lockResult(match.id)}
-                      >
-                        <Check size={18} /> Lock in
-                      </button>
-                    )}
-                  </article>
-                );
-              })}
-              {currentRoundMatches.length === 0 && (
-                <p className="empty-state">No current games to score yet.</p>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
+        </div>
+      </section>
     </main>
   );
 }

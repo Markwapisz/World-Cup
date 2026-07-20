@@ -851,6 +851,11 @@ main > :not(.hero) {
   gap: 1rem;
 }
 
+.final-page {
+  display: grid;
+  gap: 1rem;
+}
+
 .panel:nth-of-type(4n + 1) {
   --wet-sheen: var(--wet-sheen-left);
 }
@@ -934,6 +939,7 @@ main > :not(.hero) {
 .edit-match,
 .result-row,
 .family-card,
+.final-ranking-card,
 .rule,
 .champion-row,
 .winner-control {
@@ -966,6 +972,7 @@ main > :not(.hero) {
 .edit-match:nth-child(4n + 1),
 .result-row:nth-child(4n + 1),
 .family-card:nth-child(4n + 1),
+.final-ranking-card:nth-child(4n + 1),
 .rule:nth-child(4n + 1),
 .player-node:nth-child(4n + 1),
 .calendar-month:nth-child(4n + 1),
@@ -980,6 +987,7 @@ main > :not(.hero) {
 .edit-match:nth-child(4n + 2),
 .result-row:nth-child(4n + 2),
 .family-card:nth-child(4n + 2),
+.final-ranking-card:nth-child(4n + 2),
 .rule:nth-child(4n + 2),
 .player-node:nth-child(4n + 2),
 .calendar-month:nth-child(4n + 2),
@@ -994,6 +1002,7 @@ main > :not(.hero) {
 .edit-match:nth-child(4n + 3),
 .result-row:nth-child(4n + 3),
 .family-card:nth-child(4n + 3),
+.final-ranking-card:nth-child(4n + 3),
 .rule:nth-child(4n + 3),
 .player-node:nth-child(4n + 3),
 .calendar-month:nth-child(4n + 3),
@@ -1008,6 +1017,7 @@ main > :not(.hero) {
 .edit-match:nth-child(4n),
 .result-row:nth-child(4n),
 .family-card:nth-child(4n),
+.final-ranking-card:nth-child(4n),
 .rule:nth-child(4n),
 .player-node:nth-child(4n),
 .calendar-month:nth-child(4n),
@@ -1136,6 +1146,42 @@ main > :not(.hero) {
 .leader strong {
   color: var(--warm-highlight);
   font-size: 1.4rem;
+}
+
+.final-rankings {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.final-ranking-card {
+  align-items: center;
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 4.6rem;
+}
+
+.final-ranking-card h4 {
+  font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+  margin: 0;
+}
+
+.final-ranking-card p {
+  color: var(--muted-text);
+  font-size: 0.88rem;
+  font-weight: 800;
+  margin: 0.16rem 0 0;
+}
+
+.final-ranking-card strong {
+  color: var(--warm-highlight-dark);
+  font-size: clamp(1.1rem, 2.6vw, 1.55rem);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.final-ranking-card.rank-1 {
+  border-color: rgba(247, 214, 138, 0.4);
 }
 
 .rank,
